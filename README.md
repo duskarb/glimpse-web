@@ -7,17 +7,18 @@ Two Gemini models talk to each other on the exhibition screen. Their sentences p
 - `input.html`: the phone input page (opened from the QR)
 - `config.js`: models, turn count, speed
 
-## Gemini API key
+## Gemini API keys (A and B separately)
 
-Do not put the key in the repo. On the exhibition computer, open this once:
+Do not put keys in the repo. On the exhibition computer, open
 
 ```
-https://duskarb.github.io/<repo>/?key=YOUR_GEMINI_KEY
+https://duskarb.github.io/glimpse-web/setup.html
 ```
 
-The key is saved in that browser's localStorage and removed from the address bar.
-Phones never see it.
-In Google AI Studio / Cloud Console, restrict the key with an HTTP referrer of `https://duskarb.github.io/*`.
+Enter a key for speaker A and one for speaker B (ideally from two different Google projects),
+press "모델 목록 불러오기" to list the models each key can use, pick one per speaker, save, then "테스트".
+Keys are saved only in that browser's localStorage. Phones never see them.
+Restrict each key with an HTTP referrer of `https://duskarb.github.io/*`.
 
 ## Phone → screen relay
 

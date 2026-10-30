@@ -259,15 +259,22 @@ try { saved = localStorage.getItem('glimpse_lang'); } catch (_) {}
 setLang(saved || (navigator.language.startsWith('ko') ? 'ko' : 'en'));
 onScroll();
 
-// --- API 키: ?key=... 로 한 번 열면 이 브라우저(localStorage)에 저장 ---
+// --- API 키: A, B 따로. setup.html 에서 넣거나 ?keyA=...&keyB=... 로 한 번 열면 이 브라우저에 저장 ---
 const params = new URLSearchParams(location.search);
-if (params.get('key')) {
-  localStorage.setItem('glimpse_key', params.get('key'));
-  params.delete('key');
-  history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : ''));
+for (const s of ['a', 'b']) {
+  const k = params.get('key' + s.toUpperCase());
+  if (k) { localStorage.setItem('glimpse_key_' + s, k); params.delete('key' + s.toUpperCase()); }
 }
-const KEY = localStorage.getItem('glimpse_key');
-if (!KEY) status('no Gemini key — open index.html?key=YOUR_KEY once on this computer');
+history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : ''));
+const SPEAKERS = {};
+for (const s of ['A', 'B']) SPEAKERS[s] = {
+  label: s,
+  key: localStorage.getItem('glimpse_key_' + s.toLowerCase()),
+  model: localStorage.getItem('glimpse_model_' + s.toLowerCase()) || C['MODEL_' + s],
+  system: C['SYSTEM_' + s],
+};
+const READY = SPEAKERS.A.key && SPEAKERS.B.key;
+if (!READY) status('API keys missing — open setup.html on this computer');
 
 // --- 방(room) id: 전시 컴퓨터마다 고정. ?room= 으로 바꿀 수 있음 ---
 let room = params.get('room') || localStorage.getItem('glimpse_room');
@@ -299,27 +306,27 @@ function listen() {
 }
 listen();
 
-// --- Gemini ---
-async function gemini(model, system, prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-  const body = {
-    systemInstruction: { parts: [{ text: system }] },
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
-  };
-  let res = await fetch(url, { method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': KEY },
+// --- Gemini: 화자마다 자기 키, 자기 모델 ---
+async function gemini(sp, prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${sp.model}:generateContent`;
+  const post = body => fetch(url, { method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': sp.key },
     body: JSON.stringify(body) });
-  if (res.status === 400) {  // thinkingConfig를 지원하지 않는 모델
-    delete body.generationConfig;
-    res = await fetch(url, { method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': KEY },
-      body: JSON.stringify(body) });
+  let res = await post({
+    systemInstruction: { parts: [{ text: sp.system }] },
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: { maxOutputTokens: C.MAX_TOKENS, thinkingConfig: { thinkingBudget: 0 } },
+  });
+  if (res.status === 400) {  // system instruction이나 thinkingConfig를 받지 않는 모델 (Gemma 등)
+    res = await post({
+      contents: [{ role: 'user', parts: [{ text: `${sp.system}\n\n${prompt}` }] }],
+      generationConfig: { maxOutputTokens: C.MAX_TOKENS },
+    });
   }
-  if (!res.ok) throw new Error(`${model}: ${res.status} ${await res.text()}`);
+  if (!res.ok) throw new Error(`${sp.label} ${sp.model}: ${res.status} ${await res.text()}`);
   const j = await res.json();
   const parts = j.candidates?.[0]?.content?.parts || [];
-  return parts.map(p => p.text || '').join('').trim();
+  return parts.filter(p => !p.thought).map(p => p.text || '').join('').trim();
 }
 
 // 모델이 붙이는 "A:", "Human:", "**B:**" 같은 화자 표시를 지운다
@@ -332,52 +339,66 @@ function clean(s) {
 }
 
 // Glimpse.py의 speak()와 같은 프롬프트
-async function speak(history, model, system) {
+async function speak(history, sp) {
   const recent = history.slice(-C.CONTEXT_WINDOW);
   const context = recent.map(([role, text]) => `${role}: ${text}`).join('\n');
   const prompt = `Here is the conversation so far:\n${context}\n\nReply as the next speaker.`;
-  return clean(await gemini(model, system, prompt));
+  return clean(await gemini(sp, prompt));
 }
 
 // --- 종이 위에 그리기: 랜덤 위치(x는 왼쪽 절반), 오른쪽 끝까지 줄바꿈 ---
-async function draw(text, cls, deadline) {
+// 남은 시간 안에 끝나도록 글자 속도를 맞춘다 (최대 CHAR_MS)
+async function draw(text, cls, deadline, left) {
   const W = innerWidth, H = innerHeight, margin = Math.round(W * 0.03);
   const el = document.createElement('div');
   el.className = 'line ' + cls;
   const x = margin + Math.random() * (W / 2 - margin);
-  const y = 70 + Math.random() * (H - 70 - margin - 80);
   el.style.left = x + 'px';
-  el.style.top = y + 'px';
   el.style.width = (W - margin - x) + 'px';
+  el.style.visibility = 'hidden';
+  el.textContent = text;
   $('paper').appendChild(el);
-  for (const ch of text) {
-    el.textContent += ch;
-    if (Date.now() > deadline) { el.textContent = text; break; }
-    await sleep(C.CHAR_MS);
+  const h = el.offsetHeight;  // 다 쓴 높이를 미리 재서 화면 안에 들어가게 둔다
+  el.style.top = 70 + Math.random() * Math.max(0, H - 70 - margin - h) + 'px';
+  el.textContent = '';
+  el.style.visibility = '';
+
+  const budget = (deadline - Date.now()) / left - C.PAUSE_MS;
+  const charMs = Math.min(C.CHAR_MS, Math.max(1, budget / text.length));
+  const start = Date.now();
+  let n = 0;
+  while (n < text.length) {
+    await sleep(16);
+    n = Date.now() > deadline ? text.length
+      : Math.min(text.length, Math.floor((Date.now() - start) / charMs));
+    el.textContent = text.slice(0, n);
   }
 }
 
 // --- 세션 ---
+// 지금 발화를 그리는 동안 다음 발화를 미리 받아 둔다
 async function session(opening) {
   const deadline = Date.now() + C.SESSION_MAX_MS;
   scrollTo({ top: 0, behavior: 'smooth' });
   $('qr').classList.add('hidden');
   status('');
   const history = [['Human', opening]];
+  const order = [];
+  for (let t = 0; t < C.TURNS; t++) order.push('A', 'B');
   try {
-    for (let t = 0; t < C.TURNS; t++) {
-      for (const [label, model, system] of [['A', C.MODEL_A, C.SYSTEM_A], ['B', C.MODEL_B, C.SYSTEM_B]]) {
-        if (Date.now() > deadline) throw 'time';
-        const reply = await speak(history, model, system);
-        if (!reply) continue;
-        history.push([label, reply]);
-        console.log(`${label} [${t}]: ${reply}`);
-        await draw(reply, label, deadline);
-        await sleep(C.PAUSE_MS);
-      }
+    let pending = speak(history, SPEAKERS[order[0]]);
+    for (let i = 0; i < order.length; i++) {
+      const reply = await Promise.race([pending, sleep(Math.max(0, deadline - Date.now())).then(() => null)]);
+      if (Date.now() > deadline) break;
+      if (reply) history.push([order[i], reply]);
+      console.log(`${order[i]} [${i >> 1}]: ${reply}`);
+      pending = order[i + 1] ? speak(history.slice(), SPEAKERS[order[i + 1]]) : null;
+      pending?.catch(() => {});
+      if (reply) await draw(reply, order[i], deadline, order.length - i);
+      await sleep(C.PAUSE_MS);
     }
   } catch (e) {
-    if (e !== 'time') { console.error(e); status(String(e.message || e).slice(0, 160)); }
+    console.error(e); status(String(e.message || e).slice(0, 160));
   }
   await sleep(C.HOLD_MS);
   $('paper').classList.add('fading');
@@ -392,7 +413,7 @@ async function loop() {
   if (running) return;
   running = true;
   while (queue.length) {
-    if (!KEY) { queue.length = 0; break; }
+    if (!READY) { queue.length = 0; break; }
     await session(queue.shift());
   }
   running = false;

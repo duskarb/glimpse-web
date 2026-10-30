@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Glimpse setup</title>
+<style>
+  html, body { margin: 0; background: #fff; color: #000;
+    font-family: Arial, Helvetica, "Apple SD Gothic Neo", sans-serif; font-size: 15px; }
+  main { max-width: 600px; margin: 0 auto; padding: 60px 16px; }
+  h1 { font-size: 18px; font-weight: normal; text-align: center; margin: 0 0 48px; }
+  fieldset { border: 0; padding: 0; margin: 0 0 40px; }
+  legend { padding: 0; margin-bottom: 12px; }
+  label { display: block; margin: 12px 0 4px; color: #777; }
+  input, select { width: 100%; box-sizing: border-box; font: inherit; padding: 8px;
+    border: 1px solid #000; border-radius: 0; background: #fff; }
+  button { background: none; border: 0; padding: 0; font: inherit; cursor: pointer;
+    text-decoration: underline; margin-right: 16px; }
+  .A { color: #2f9a62; } .B { color: #6a4aa8; }
+  #msg { margin-top: 24px; min-height: 1.4em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>glimpse setup</h1>
+  <fieldset>
+    <legend class="A">Speaker A</legend>
+    <label for="keyA">Gemini API key</label>
+    <input id="keyA" type="password" autocomplete="off">
+    <label for="modelA">Model</label>
+    <select id="modelA"></select>
+  </fieldset>
+  <fieldset>
+    <legend class="B">Speaker B</legend>
+    <label for="keyB">Gemini API key</label>
+    <input id="keyB" type="password" autocomplete="off">
+    <label for="modelB">Model</label>
+    <select id="modelB"></select>
+  </fieldset>
+  <button id="load">모델 목록 불러오기</button>
+  <button id="save">저장</button>
+  <button id="test">테스트</button>
+  <button id="clear">지우기</button>
+  <p id="msg"></p>
+  <p style="color:#777">키와 모델은 이 브라우저(localStorage)에만 저장됩니다. A와 B는 서로 다른 키(다른 프로젝트)를 쓰는 걸 권합니다.</p>
+</main>
+<script src="config.js"></script>
+<script>
+const C = window.GLIMPSE;
+const $ = id => document.getElementById(id);
+const get = k => { try { return localStorage.getItem(k) || ''; } catch (_) { return ''; } };
+const msg = t => { $('msg').textContent = t; };
+
+for (const s of ['A', 'B']) {
+  $('key' + s).value = get('glimpse_key_' + s.toLowerCase());
+  const m = get('glimpse_model_' + s.toLowerCase()) || C['MODEL_' + s];
+  $('model' + s).innerHTML = `<option>${m}</option>`;
+}
+
+// 키로 쓸 수 있는 generateContent 모델 목록을 불러온다
+async function models(key) {
+  const out = [];
+  let page = '';
+  do {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000${page ? '&pageToken=' + page : ''}`,
+      { headers: { 'x-goog-api-key': key } });
+    if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 200)}`);
+    const j = await r.json();
+    for (const m of j.models || [])
+      if ((m.supportedGenerationMethods || []).includes('generateContent')) out.push(m.name.replace('models/', ''));
+    page = j.nextPageToken;
+  } while (page);
+  return out;
+}
+
+$('load').onclick = async () => {
+  msg('불러오는 중…');
+  try {
+    for (const s of ['A', 'B']) {
+      const key = $('key' + s).value.trim();
+      if (!key) continue;
+      const cur = $('model' + s).value;
+      const list = await models(key);
+      $('model' + s).innerHTML = list.map(n => `<option${n === cur ? ' selected' : ''}>${n}</option>`).join('');
+    }
+    msg('모델을 고른 뒤 저장하세요.');
+  } catch (e) { msg('실패: ' + e.message); }
+};
+
+$('save').onclick = () => {
+  for (const s of ['A', 'B']) {
+    localStorage.setItem('glimpse_key_' + s.toLowerCase(), $('key' + s).value.trim());
+    localStorage.setItem('glimpse_model_' + s.toLowerCase(), $('model' + s).value);
+  }
+  msg('저장했습니다. 전시 화면(index.html)을 새로고침하세요.');
+};
+
+$('test').onclick = async () => {
+  msg('테스트 중…');
+  const out = [];
+  for (const s of ['A', 'B']) {
+    const key = $('key' + s).value.trim(), model = $('model' + s).value;
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Say hello in five words.' }] }] }) });
+      const j = await r.json();
+      out.push(`${s}: ${r.ok ? 'OK — ' + (j.candidates?.[0]?.content?.parts?.[0]?.text || '').trim() : r.status + ' ' + (j.error?.message || '')}`);
+    } catch (e) { out.push(`${s}: ${e.message}`); }
+  }
+  msg(out.join('  /  '));
+};
+
+$('clear').onclick = () => {
+  for (const k of ['glimpse_key_a', 'glimpse_key_b', 'glimpse_model_a', 'glimpse_model_b']) localStorage.removeItem(k);
+  $('keyA').value = $('keyB').value = '';
+  msg('지웠습니다.');
+};
+</script>
+</body>
+</html>
