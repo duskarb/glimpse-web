@@ -5,23 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Glimpse</title>
 <style>
-  :root { --green: #2f9a62; --purple: #6a4aa8; --gutter: 80px; }
+  :root { --green: #2f9a62; --purple: #6a4aa8; --gutter: 16px; }
   html, body { margin: 0; background: #fff; color: #000; }
+  html { scrollbar-width: none; }
+  html::-webkit-scrollbar { display: none; }
   body { font-family: Arial, Helvetica, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
     font-size: 19px; line-height: 1.45; }
   html[lang=ko] .en, html[lang=en] .ko { display: none !important; }
 
   /* --- 고정 UI --- */
   #title { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 5;
-    font-size: 18px; letter-spacing: .04em; color: #000; text-decoration: none;
-    border-radius: 999px; padding: 4px 14px; transition: background .3s; }
-  body.scrolled #title { background: #f2f2f2; }
-  #lang { position: fixed; top: 16px; right: 16px; z-index: 5; display: flex; gap: 2px; }
-  .pill { background: #f2f2f2; border: 0; border-radius: 999px; padding: 6px 14px;
-    font: inherit; font-size: 15px; color: #000; cursor: pointer; }
-  #lang .pill { padding: 6px 12px; color: #999; }
-  #lang .pill.on { color: #000; }
-  #now { position: fixed; right: 16px; bottom: 16px; z-index: 5; }
+    font-size: 18px; letter-spacing: .04em; color: #000; text-decoration: none; }
+  #lang { position: fixed; top: 20px; right: 16px; z-index: 5; display: flex; gap: 10px; }
+  .txt { background: none; border: 0; padding: 0; font: inherit; font-size: 15px;
+    color: #000; cursor: pointer; }
+  #lang .txt { color: #aaa; }
+  #lang .txt.on { color: #000; }
+  #info-btn { position: fixed; right: 16px; bottom: 16px; z-index: 5; transition: opacity .3s; }
+  body.scrolled #info-btn { opacity: 0; pointer-events: none; }
+  /* 스크롤바 자리: 지금 섹션 이름이 스크롤 위치를 따라 내려간다 */
+  #now { position: fixed; right: 16px; top: 0; z-index: 5; white-space: nowrap;
+    opacity: 0; transition: opacity .3s; }
+  body.scrolled #now { opacity: 1; }
 
   /* --- 세션 종이: 화면 뒤에 고정, 스크롤하면 배경으로 --- */
   #paper { position: fixed; inset: 0; z-index: 0; transition: opacity .8s; pointer-events: none; }
@@ -43,12 +48,12 @@
   main { position: relative; z-index: 1; padding: 200px 0 160px; }
   section { margin-bottom: 240px; }
   h2 { font: inherit; text-transform: uppercase; text-align: center; margin: 0 auto 28px;
-    max-width: 768px; padding: 0 16px; }
-  .text { max-width: 768px; margin: 0 auto; padding: 0 16px; }
+    max-width: 600px; padding: 0 16px; }
+  .text { max-width: 600px; margin: 0 auto; padding: 0 16px; }
   .text p { margin: 0 0 28px; }
-  figure { margin: 200px auto 0; padding: 0 var(--gutter); max-width: 1280px; }
-  figure.col { max-width: 768px; padding: 0 16px; }
-  figure.small { max-width: 512px; padding: 0 16px; }
+  figure { margin: 200px auto 0; padding: 0 var(--gutter); max-width: 880px; }
+  figure.col { max-width: 600px; }
+  figure.small { max-width: 400px; }
   figure + figure { margin-top: 40px; }
   figure img, figure video { display: block; width: 100%; height: auto; background: #f4f4f4; }
   figure.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -57,7 +62,6 @@
   figure + .text { margin-top: 200px; }
   a { color: inherit; }
   @media (max-width: 800px) {
-    :root { --gutter: 16px; }
     body { font-size: 17px; }
     main { padding-top: 120px; }
     section { margin-bottom: 160px; }
@@ -70,10 +74,11 @@
 <body>
 <a id="title" href="#">glimpse</a>
 <div id="lang">
-  <button class="pill" data-l="ko">한</button>
-  <button class="pill" data-l="en">EN</button>
+  <button class="txt" data-l="ko">한</button>
+  <button class="txt" data-l="en">EN</button>
 </div>
-<button id="now" class="pill"></button>
+<button id="info-btn" class="txt">information</button>
+<button id="now" class="txt"></button>
 
 <div id="paper"></div>
 
@@ -217,28 +222,32 @@ const status = t => { $('status').textContent = t || ''; };
 // --- 한/영 ---
 function setLang(l) {
   document.documentElement.lang = l;
-  document.querySelectorAll('#lang .pill').forEach(b => b.classList.toggle('on', b.dataset.l === l));
+  document.querySelectorAll('#lang .txt').forEach(b => b.classList.toggle('on', b.dataset.l === l));
   try { localStorage.setItem('glimpse_lang', l); } catch (_) {}
   updateNow();
 }
-document.querySelectorAll('#lang .pill').forEach(b => b.onclick = () => setLang(b.dataset.l));
+document.querySelectorAll('#lang .txt').forEach(b => b.onclick = () => setLang(b.dataset.l));
 
-// --- 우측 하단: 첫 화면에선 information, 스크롤하면 지금 섹션 이름 ---
+// --- 스크롤바 자리: 지금 섹션 이름이 스크롤 위치를 따라 오른쪽 끝을 내려간다 ---
 const sections = [...document.querySelectorAll('main section')];
 let current = null;
 function updateNow() {
   const ko = document.documentElement.lang === 'ko';
-  $('now').textContent = current ? current.dataset['name' + (ko ? 'Ko' : 'En')] : 'information';
+  $('now').textContent = current ? current.dataset['name' + (ko ? 'Ko' : 'En')] : '';
 }
 function onScroll() {
   document.body.classList.toggle('scrolled', scrollY > innerHeight * 0.5);
-  current = null;
+  current = sections[0];
   for (const s of sections) if (s.getBoundingClientRect().top < innerHeight * 0.5) current = s;
   updateNow();
+  const max = document.documentElement.scrollHeight - innerHeight;
+  const top = 56, bottom = innerHeight - 16 - $('now').offsetHeight;
+  $('now').style.transform = `translateY(${top + (bottom - top) * (max > 0 ? scrollY / max : 0)}px)`;
 }
 addEventListener('scroll', onScroll, { passive: true });
-$('now').onclick = () => current ? scrollTo({ top: 0, behavior: 'smooth' })
-                                 : sections[0].scrollIntoView({ behavior: 'smooth' });
+addEventListener('resize', onScroll);
+$('info-btn').onclick = () => sections[0].scrollIntoView({ behavior: 'smooth' });
+$('now').onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
 $('title').onclick = e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); };
 
 // 영상은 보일 때만 재생
@@ -248,6 +257,7 @@ document.querySelectorAll('video').forEach(v => vio.observe(v));
 let saved = null;
 try { saved = localStorage.getItem('glimpse_lang'); } catch (_) {}
 setLang(saved || (navigator.language.startsWith('ko') ? 'ko' : 'en'));
+onScroll();
 
 // --- API 키: ?key=... 로 한 번 열면 이 브라우저(localStorage)에 저장 ---
 const params = new URLSearchParams(location.search);
