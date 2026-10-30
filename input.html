@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glimpse</title>
+<style>
+  html, body { margin: 0; background: #fff; color: #000;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  main { max-width: 480px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 18px; font-weight: normal; text-align: center; letter-spacing: .04em; margin: 0 0 48px; }
+  textarea { width: 100%; box-sizing: border-box; height: 120px; font: inherit; font-size: 16px;
+    border: 1px solid #000; border-radius: 0; padding: 10px; resize: none; }
+  button { margin-top: 12px; width: 100%; font: inherit; font-size: 16px; padding: 12px;
+    background: #000; color: #fff; border: 0; border-radius: 0; }
+  button:disabled { opacity: .4; }
+  p { font-size: 14px; text-align: center; min-height: 1.4em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>glimpse</h1>
+  <form id="f">
+    <textarea id="t" placeholder="Write one sentence." required></textarea>
+    <button id="b">send</button>
+  </form>
+  <p id="msg"></p>
+</main>
+<script src="config.js"></script>
+<script>
+const C = window.GLIMPSE;
+const room = location.hash.slice(1);
+const t = document.getElementById('t'), b = document.getElementById('b'), msg = document.getElementById('msg');
+t.maxLength = C.MAX_INPUT;
+if (!room) { b.disabled = true; msg.textContent = 'Scan the QR code on the screen.'; }
+
+document.getElementById('f').onsubmit = async e => {
+  e.preventDefault();
+  const text = t.value.replace(/\s+/g, ' ').trim();
+  if (!text || !room) return;
+  b.disabled = true;
+  try {
+    const res = await fetch(`${C.RELAY}/glimpse-${room}`, { method: 'POST', body: text });
+    if (!res.ok) throw new Error(res.status);
+    t.value = '';
+    msg.textContent = 'Sent. Look at the screen.';
+  } catch (_) {
+    msg.textContent = 'Could not send. Try again.';
+  }
+  setTimeout(() => { b.disabled = false; }, 3000);
+};
+</script>
+</body>
+</html>
