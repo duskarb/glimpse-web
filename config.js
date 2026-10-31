@@ -4,8 +4,8 @@
 
 window.GLIMPSE = {
   // 화자별 모델 (setup.html 에서 이 브라우저만 따로 바꿀 수도 있음)
-  MODEL_A: 'gemini-2.5-flash',
-  MODEL_B: 'gemini-2.5-flash-lite',
+  MODEL_A: 'gemini-3.5-flash',
+  MODEL_B: 'gemini-3.5-flash',
   SYSTEM_A: 'Reply in fewer than three sentences.',
   SYSTEM_B: 'Reply in fewer than three sentences.',
   MAX_SENTENCES: 2,      // 지시를 어겨도 화면에는 완성된 문장 최대 2개까지만

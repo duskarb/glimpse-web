@@ -45,7 +45,7 @@
   <p id="msg"></p>
   <p style="color:#777">키와 모델은 이 브라우저(localStorage)에만 저장됩니다. A와 B는 서로 다른 키(다른 프로젝트)를 쓰는 걸 권합니다.</p>
 </main>
-<script src="config.js?v=2"></script>
+<script src="config.js?v=3"></script>
 <script>
 const C = window.GLIMPSE;
 const $ = id => document.getElementById(id);
@@ -54,7 +54,7 @@ const msg = t => { $('msg').textContent = t; };
 
 // 키 없이도 고를 수 있는 기본 후보. "모델 목록 불러오기"를 누르면 키로 쓸 수 있는 전체 목록으로 바뀐다.
 // 목록에 없는 이름도 직접 입력할 수 있다.
-const KNOWN = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-2.0-flash-lite',
+const KNOWN = ['gemini-3.5-flash', 'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-2.0-flash-lite',
   'gemma-3-27b-it', 'gemma-3-12b-it', 'gemma-3-4b-it', 'gemma-3-1b-it', 'gemma-3n-e4b-it', 'gemma-3n-e2b-it'];
 const fill = (s, list) => { $('models' + s).innerHTML = list.map(n => `<option value="${n}">`).join(''); };
 for (const s of ['A', 'B']) {
