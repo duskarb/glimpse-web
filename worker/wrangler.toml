@@ -1,0 +1,9 @@
+name = "glimpse-speak"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+# 키는 여기에 쓰지 않는다. 비밀값으로 넣는다:
+#   npx wrangler secret put KEY_A
+#   npx wrangler secret put KEY_B
+[vars]
+ALLOWED_ORIGINS = "https://duskarb.github.io,http://localhost:8765"

@@ -9,16 +9,20 @@ Two Gemini models talk to each other on the exhibition screen. Their sentences p
 
 ## Gemini API keys (A and B separately)
 
-Do not put keys in the repo. On the exhibition computer, open
+Do not put keys in the repo. They live only as secrets of the Cloudflare Worker in `worker/`,
+so any computer can open the screen with no setup:
 
 ```
-https://duskarb.github.io/glimpse-web/setup.html
+cd worker
+npx wrangler secret put KEY_A
+npx wrangler secret put KEY_B
 ```
 
-Enter a key for speaker A and one for speaker B (ideally from two different Google projects),
-press "모델 목록 불러오기" to list the models each key can use, pick one per speaker, save, then "테스트".
-Keys are saved only in that browser's localStorage. Phones never see them.
-Restrict each key with an HTTP referrer of `https://duskarb.github.io/*`.
+Each command asks for the key and stores it in Cloudflare. To change a key, run it again.
+Models are set in `config.js` (`MODEL_A`, `MODEL_B`). The Worker only answers requests from
+`ALLOWED_ORIGINS` in `worker/wrangler.toml`. Deploy Worker changes with `npx wrangler deploy` in `worker/`.
+
+`setup.html` still works as a per-browser override: a key saved there is called directly, without the Worker.
 
 ## Phone → screen relay
 

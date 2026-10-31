@@ -259,7 +259,8 @@ try { saved = localStorage.getItem('glimpse_lang'); } catch (_) {}
 setLang(saved || (navigator.language.startsWith('ko') ? 'ko' : 'en'));
 onScroll();
 
-// --- API 키: A, B 따로. setup.html 에서 넣거나 ?keyA=...&keyB=... 로 한 번 열면 이 브라우저에 저장 ---
+// --- API 키: 기본은 Cloudflare Worker(C.PROXY)가 들고 있어 이 화면엔 키가 없다.
+// setup.html 이나 ?keyA=...&keyB=... 로 이 브라우저에 키를 넣으면 그 화자는 Worker 없이 직접 부른다 ---
 const params = new URLSearchParams(location.search);
 for (const s of ['a', 'b']) {
   const k = params.get('key' + s.toUpperCase());
@@ -273,8 +274,8 @@ for (const s of ['A', 'B']) SPEAKERS[s] = {
   model: localStorage.getItem('glimpse_model_' + s.toLowerCase()) || C['MODEL_' + s],
   system: C['SYSTEM_' + s],
 };
-const READY = SPEAKERS.A.key && SPEAKERS.B.key;
-if (!READY) status('API keys missing — open setup.html on this computer');
+const READY = C.PROXY || (SPEAKERS.A.key && SPEAKERS.B.key);
+if (!READY) status('API keys missing — set PROXY in config.js or open setup.html');
 
 // --- 방(room) id: 전시 컴퓨터마다 고정. ?room= 으로 바꿀 수 있음 ---
 let room = params.get('room') || localStorage.getItem('glimpse_room');
@@ -308,6 +309,13 @@ listen();
 
 // --- Gemini: 화자마다 자기 키, 자기 모델 ---
 async function gemini(sp, prompt) {
+  if (!sp.key) {
+    const res = await fetch(C.PROXY, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ speaker: sp.label, model: sp.model, system: sp.system, prompt, maxTokens: C.MAX_TOKENS }) });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(`${sp.label} ${sp.model}: ${res.status} ${j.error || ''}`);
+    return j.text || '';
+  }
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${sp.model}:generateContent`;
   const post = body => fetch(url, { method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': sp.key },

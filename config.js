@@ -1,9 +1,9 @@
 // Glimpse web — 설정
 // API 키는 여기에 쓰지 마세요 (레포가 공개라 노출됩니다).
-// 전시 컴퓨터에서 setup.html 을 열어 A, B 키와 모델을 넣으면 그 브라우저에만 저장됩니다.
+// 키는 Cloudflare Worker 비밀값으로 넣습니다 (README 참고). 모델은 아래 MODEL_A, MODEL_B 로 바꿉니다.
 
 window.GLIMPSE = {
-  // setup.html 에서 고르지 않았을 때 쓰는 기본 모델
+  // 화자별 모델 (setup.html 에서 이 브라우저만 따로 바꿀 수도 있음)
   MODEL_A: 'gemini-2.5-flash',
   MODEL_B: 'gemini-2.5-flash-lite',
   SYSTEM_A: 'Reply in fewer than three sentences.',
@@ -17,6 +17,8 @@ window.GLIMPSE = {
   PAUSE_MS: 800,         // 발화 사이 쉬는 시간
   HOLD_MS: 12000,        // 끝난 뒤 결과를 보여주는 시간
   MAX_INPUT: 200,
+  // Gemini 키를 들고 있는 Cloudflare Worker (worker/ 폴더). 키는 Worker 비밀값에만 있다
+  PROXY: 'https://glimpse-speak.prism011312.workers.dev',
   // 폰 → 전시 화면 중계 (ntfy.sh 공개 pub/sub, 서버 불필요)
   RELAY: 'https://ntfy.sh',
 };
