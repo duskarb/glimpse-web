@@ -212,7 +212,7 @@
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="config.js"></script>
+<script src="config.js?v=2"></script>
 <script>
 const C = window.GLIMPSE;
 const $ = id => document.getElementById(id);
@@ -338,7 +338,7 @@ async function gemini(sp, prompt) {
 }
 
 // 모델이 붙이는 "A:", "Human:", "**B:**" 같은 화자 표시를 지운다
-const SPEAKER = '(?:Human|Speaker\\s*[AB]|Model\\s*[AB]|[AB])\\s*(?:\\[\\d+\\])?\\s*[:：]';
+const SPEAKER = '(?:Human|Speaker\\s*[A-Z]|Model\\s*[A-Z]|[A-Z])\\s*(?:\\[\\d+\\])?\\s*[:：]';
 function clean(s) {
   s = s.replace(/[*_#`"“”]/g, '');
   s = s.split(new RegExp('\\n\\s*' + SPEAKER, 'i'))[0];
