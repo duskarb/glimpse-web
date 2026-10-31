@@ -12,7 +12,7 @@ window.GLIMPSE = {
   MAX_TOKENS: 350,       // 한 발화 최대 길이. 문장이 중간에 잘리지 않도록 넉넉하게
   TURNS: 10,             // A, B 각각 10번 = 20발화
   CONTEXT_WINDOW: 10,
-  SESSION_MAX_MS: 100000, // 세션 상한. 끝난 뒤 HOLD + 페이드까지 2분 미만
+  SESSION_MAX_MS: 285000, // 세션 상한. 끝난 뒤 HOLD + 페이드까지 5분 이내
   CHAR_MS: 35,           // 글자당 최대 지연. 글이 길면 세션 안에 끝나도록 자동으로 빨라짐
   PAUSE_MS: 800,         // 발화 사이 쉬는 시간
   HOLD_MS: 12000,        // 끝난 뒤 결과를 보여주는 시간
