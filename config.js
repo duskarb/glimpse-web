@@ -6,9 +6,10 @@ window.GLIMPSE = {
   // setup.html 에서 고르지 않았을 때 쓰는 기본 모델
   MODEL_A: 'gemini-2.5-flash',
   MODEL_B: 'gemini-2.5-flash-lite',
-  SYSTEM_A: 'Reply.',
-  SYSTEM_B: 'Reply.',
-  MAX_TOKENS: 350,       // 한 발화 최대 길이 (대략 영어 250단어)
+  SYSTEM_A: 'Reply in fewer than three sentences.',
+  SYSTEM_B: 'Reply in fewer than three sentences.',
+  MAX_SENTENCES: 2,      // 지시를 어겨도 화면에는 완성된 문장 최대 2개까지만
+  MAX_TOKENS: 350,       // 한 발화 최대 길이. 문장이 중간에 잘리지 않도록 넉넉하게
   TURNS: 5,              // A, B 각각 5번 = 10발화
   CONTEXT_WINDOW: 10,
   SESSION_MAX_MS: 100000, // 세션 상한. 끝난 뒤 HOLD + 페이드까지 2분 미만

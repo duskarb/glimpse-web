@@ -343,7 +343,13 @@ async function speak(history, sp) {
   const recent = history.slice(-C.CONTEXT_WINDOW);
   const context = recent.map(([role, text]) => `${role}: ${text}`).join('\n');
   const prompt = `Here is the conversation so far:\n${context}\n\nReply as the next speaker.`;
-  return clean(await gemini(sp, prompt));
+  return limit(clean(await gemini(sp, prompt)), C.MAX_SENTENCES);
+}
+
+// 모델이 지시를 어겨도 완성된 문장만 최대 n개 남긴다 (길이 한도에 잘린 끝 문장은 버린다)
+function limit(s, n) {
+  const done = s.match(/[^.!?。！？]+[.!?。！？]+/g);
+  return done ? done.slice(0, n).join('').trim() : s;
 }
 
 // --- 종이 위에 그리기: 랜덤 위치(x는 왼쪽 절반), 오른쪽 끝까지 줄바꿈 ---
