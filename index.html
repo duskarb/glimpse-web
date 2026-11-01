@@ -108,6 +108,20 @@
         opacity: 1 !important;
       }
 
+      /* --- 한동안 입력이 없을 때 흰 막으로 덮었다 걷으며 QR 화면으로 --- */
+      #veil {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        background: #fff;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 1.2s ease;
+      }
+      #veil.on {
+        opacity: 1;
+      }
+
       /* --- 세션 종이: 화면 뒤에 고정, 스크롤하면 배경으로 --- */
       #paper {
         position: fixed;
@@ -265,6 +279,7 @@
     <nav id="index"></nav>
 
     <div id="paper"></div>
+    <div id="veil"></div>
 
     <div id="hero">
       <div id="qr"></div>
@@ -1574,8 +1589,13 @@
       let idleTimer = 0;
       function resetIdle() {
         clearTimeout(idleTimer);
-        idleTimer = setTimeout(() => {
-          if (scrollY > 0) scrollTo({ top: 0, behavior: "smooth" });
+        idleTimer = setTimeout(async () => {
+          if (scrollY === 0) return;
+          // 스크롤로 끌어올리지 않고, 흰 막으로 천천히 덮은 뒤 맨 위로 옮겨 다시 걷는다
+          $("veil").classList.add("on");
+          await sleep(1300);
+          scrollTo({ top: 0, behavior: "instant" });
+          $("veil").classList.remove("on");
         }, C.IDLE_MS || 60000);
       }
       [
