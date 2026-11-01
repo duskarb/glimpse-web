@@ -23,10 +23,15 @@
   #lang .txt.on { color: #000; }
   #info-btn { position: fixed; right: 16px; bottom: 16px; z-index: 5; transition: opacity .3s; }
   body.scrolled #info-btn { opacity: 0; pointer-events: none; }
-  /* 스크롤바 자리: 지금 섹션 이름이 스크롤 위치를 따라 내려간다 */
-  #now { position: fixed; right: 16px; top: 0; z-index: 5; white-space: nowrap;
-    opacity: 0; transition: opacity .3s; }
-  body.scrolled #now { opacity: 1; }
+  /* 스크롤바 자리: 섹션 이름들이 문서 속 위치에 맞춰 오른쪽 끝에 놓인다.
+     지금 섹션만 진하고, 나머지는 커서가 가까이 올수록 드러난다 */
+  #index { position: fixed; inset: 0 0 0 auto; width: 0; z-index: 5;
+    opacity: 0; pointer-events: none; transition: opacity .3s; }
+  body.scrolled #index { opacity: 1; }
+  #index .txt { position: absolute; right: 16px; top: 0; white-space: nowrap;
+    opacity: 0; transition: opacity .25s; }
+  body.scrolled #index .txt { pointer-events: auto; }
+  #index .txt.on { opacity: 1 !important; }
 
   /* --- 세션 종이: 화면 뒤에 고정, 스크롤하면 배경으로 --- */
   #paper { position: fixed; inset: 0; z-index: 0; transition: opacity .8s; pointer-events: none; }
@@ -79,7 +84,7 @@
   <button class="txt" data-l="en">EN</button>
 </div>
 <button id="info-btn" class="txt">information</button>
-<button id="now" class="txt"></button>
+<nav id="index"></nav>
 
 <div id="paper"></div>
 
@@ -133,28 +138,6 @@
       <img src="assets/6378.jpg" alt="Taeyoon Choi: wall of diagrams on past, present and future" loading="lazy">
       <figcaption><span class="en">Reference: Taeyoon Choi, <i>We Tricked Rocks to Think</i> (꾀 부리는 돌), Forever Gallery</span><span class="ko">참고: 최태윤, 〈꾀 부리는 돌 We Tricked Rocks to Think〉, 포에버 갤러리</span></figcaption>
     </figure>
-    <div class="text">
-      <p class="en">At first the numbers are visible and the time can be read. But as time passes, numbers pile on numbers and grow harder and harder to read. In the end only the flow remains. The moment disappears and only time is left. Still, while the pen is moving, the time can be known. Focusing on that moment is how the viewer enters time.</p>
-      <p class="ko">이 작품은 처음엔 숫자가 보이고 시각을 읽을 수 있다. 그러나 시간이 지날수록 숫자 위에 숫자가 쌓이고, 점점 읽을 수 없게 된다. 결국에 남는 것은 흐름뿐이다. 시각은 사라지고 시간만 남는다. 단, 펜이 움직이는 순간에는 시각을 알 수 있다. 그 순간에 집중하는 것, 그것이 관람자가 시간 안으로 들어오는 방법이다.</p>
-      <p class="src">2026.03.21 · 「Overwrite: A Pen Plotter as a Model of Time’s Irreversibility」</p>
-      <p class="en">A moment is a point and time is a line. We usually catch one point on the flow of time. This work lets you experience the point melting into the line.</p>
-      <p class="ko">시각은 점이고 시간은 선이다. 우리는 보통 시간이라는 흐름 위에서 하나의 점을 포착한다. 이 작품은 점이 선으로 녹아드는 걸 경험하게 한다.</p>
-      <p class="src">2026.03.21 · 「Overwrite: A Pen Plotter as a Model of Time’s Irreversibility」</p>
-    </div>
-    <figure class="small">
-      <video src="assets/5948.mp4" poster="assets/5948.poster.jpg" muted loop playsinline preload="none"></video>
-      <figcaption><span class="en">A day log, written hour by hour over itself</span><span class="ko">한 시간씩 겹쳐 쓰이는 하루의 기록</span></figcaption>
-    </figure>
-    <div class="text">
-      <p class="en">Like Hirst’s ping-pong ball, we watch something running, but the plotter also stops in the end — when the museum closes, or when it moves. The moment the paper is full is not the end of time but the end of what can be expressed.</p>
-      <p class="ko">허스트의 탁구공처럼, 우리는 작동되고 있는 걸 보지만 플로터도 결국에는 멈춥니다. 미술관이 닫을 때나 이동할 때. 종이가 다 찬 순간은 시간의 끝이 아닌 표현가능성의 끝이다.</p>
-      <p class="src">2026.03.29 · 「PPP_260329」</p>
-    </div>
-    <figure class="pair">
-      <img src="assets/9682.jpg" alt="Notes: a list of hours and a spiral" loading="lazy">
-      <img src="assets/6594.jpg" alt="Damien Hirst, What Goes Up Must Come Down: a ball held up by a hairdryer" loading="lazy">
-      <figcaption><span class="en">Notes on hours, and a reference: Damien Hirst, <i>What Goes Up Must Come Down</i></span><span class="ko">시각에 대한 메모, 그리고 참고: 데미안 허스트, 〈올라간 것은 반드시 내려온다〉</span></figcaption>
-    </figure>
   </section>
 
   <section data-name-en="02 Time and the Plotter" data-name-ko="02 시간과 플로터">
@@ -163,15 +146,14 @@
       <p class="en">The discovery that the pen plotter’s material nature is structurally isomorphic with time is the real starting point of this project. It cannot be undone — irreversibility. Its path has an order — direction. Its lines accumulate — accumulation. It moves slowly — real time. It draws only one line at a time — the singularity of the present.</p>
       <p class="ko">펜플로터의 물성이 시간과 구조적으로 동형(isomorphic)이라는 발견이 이 프로젝트의 진짜 출발점이다. 되돌릴 수 없다 — 비가역성. 경로에 순서가 있다 — 방향성. 선이 누적된다 — 축적. 느리게 움직인다 — 실시간성. 한 번에 한 선만 긋는다 — 현재의 단수성.</p>
       <p class="src">2026.03.08 · 「Plotter clock」</p>
-      <p class="en">A digital printer outputs a finished image. With a plotter, the process of making the image is itself the work. Time folded inside (the printer) versus time unfolding (the plotter).</p>
-      <p class="ko">디지털 프린터는 완성된 이미지를 출력한다. 플로터는 이미지를 생성하는 과정 자체가 작품이다. 시간이 내부에 접혀 있는 것(프린터)과 시간이 펼쳐지는 것(플로터).</p>
-      <p class="src">2026.03.08 · 「Plotter clock」</p>
-      <p class="en">The DXY-880 is a discontinued machine. Hirst’s hairdryer can still be bought and replaced, but this pen plotter is no longer made. The device is heading toward its own end. The tool that records time is itself worn down by time.</p>
-      <p class="ko">DXY-880은 단종된 기계다. 허스트의 헤어드라이어는 현재도 구할 수 있고 교체 가능하지만, 이 펜 플로터는 더 이상 생산되지 않는다. 이 기기는 자기 소멸을 향해 가고 있다. 시간을 기록하는 도구 스스로가 시간에 의해 닳는다.</p>
-      <p class="src">2026.03.29 · 「PPP_260329」</p>
     </div>
     <figure class="col"><img src="assets/5851.jpg" alt="Roland DXY-880 front" loading="lazy"></figure>
     <figure><img src="assets/5852.jpg" alt="The plotter in the studio" loading="lazy"></figure>
+    <div class="text">
+      <p class="en">A digital printer outputs a finished image. With a plotter, the process of making the image is itself the work. Time folded inside (the printer) versus time unfolding (the plotter).</p>
+      <p class="ko">디지털 프린터는 완성된 이미지를 출력한다. 플로터는 이미지를 생성하는 과정 자체가 작품이다. 시간이 내부에 접혀 있는 것(프린터)과 시간이 펼쳐지는 것(플로터).</p>
+      <p class="src">2026.03.08 · 「Plotter clock」</p>
+    </div>
     <figure class="pair">
       <img src="assets/5854.jpg" alt="Two pen adapters" loading="lazy">
       <img src="assets/5868.jpg" alt="A robot sketch drawn by the plotter" loading="lazy">
@@ -191,10 +173,87 @@
       <video src="assets/5853.mp4" poster="assets/5853.poster.jpg" muted loop playsinline preload="none"></video>
       <figcaption><span class="en">Sending commands from a laptop to the plotter</span><span class="ko">노트북에서 플로터로 명령을 보내는 모습</span></figcaption>
     </figure>
+    <div class="text">
+      <p class="en">At first the numbers are visible and the time can be read. But as time passes, numbers pile on numbers and grow harder and harder to read. In the end only the flow remains. The moment disappears and only time is left. Still, while the pen is moving, the time can be known. Focusing on that moment is how the viewer enters time.</p>
+      <p class="ko">이 작품은 처음엔 숫자가 보이고 시각을 읽을 수 있다. 그러나 시간이 지날수록 숫자 위에 숫자가 쌓이고, 점점 읽을 수 없게 된다. 결국에 남는 것은 흐름뿐이다. 시각은 사라지고 시간만 남는다. 단, 펜이 움직이는 순간에는 시각을 알 수 있다. 그 순간에 집중하는 것, 그것이 관람자가 시간 안으로 들어오는 방법이다.</p>
+      <p class="src">2026.03.21 · 「Overwrite: A Pen Plotter as a Model of Time’s Irreversibility」</p>
+      <p class="en">A moment is a point and time is a line. We usually catch one point on the flow of time. This work lets you experience the point melting into the line.</p>
+      <p class="ko">시각은 점이고 시간은 선이다. 우리는 보통 시간이라는 흐름 위에서 하나의 점을 포착한다. 이 작품은 점이 선으로 녹아드는 걸 경험하게 한다.</p>
+      <p class="src">2026.03.21 · 「Overwrite: A Pen Plotter as a Model of Time’s Irreversibility」</p>
+    </div>
+    <figure class="small">
+      <video src="assets/5948.mp4" poster="assets/5948.poster.jpg" muted loop playsinline preload="none"></video>
+      <figcaption><span class="en">A day log, written hour by hour over itself</span><span class="ko">한 시간씩 겹쳐 쓰이는 하루의 기록</span></figcaption>
+    </figure>
+    <div class="text">
+      <p class="en">Like Hirst’s ping-pong ball, we watch something running, but the plotter also stops in the end — when the museum closes, or when it moves. The moment the paper is full is not the end of time but the end of what can be expressed.</p>
+      <p class="ko">허스트의 탁구공처럼, 우리는 작동되고 있는 걸 보지만 플로터도 결국에는 멈춥니다. 미술관이 닫을 때나 이동할 때. 종이가 다 찬 순간은 시간의 끝이 아닌 표현가능성의 끝이다.</p>
+      <p class="src">2026.03.29 · 「PPP_260329」</p>
+      <p class="en">The DXY-880 is a discontinued machine. Hirst’s hairdryer can still be bought and replaced, but this pen plotter is no longer made. The device is heading toward its own end. The tool that records time is itself worn down by time.</p>
+      <p class="ko">DXY-880은 단종된 기계다. 허스트의 헤어드라이어는 현재도 구할 수 있고 교체 가능하지만, 이 펜 플로터는 더 이상 생산되지 않는다. 이 기기는 자기 소멸을 향해 가고 있다. 시간을 기록하는 도구 스스로가 시간에 의해 닳는다.</p>
+      <p class="src">2026.03.29 · 「PPP_260329」</p>
+    </div>
+    <figure class="pair">
+      <img src="assets/9682.jpg" alt="Notes: a list of hours and a spiral" loading="lazy">
+      <img src="assets/6594.jpg" alt="Damien Hirst, What Goes Up Must Come Down: a ball held up by a hairdryer" loading="lazy">
+      <figcaption><span class="en">Notes on hours, and a reference: Damien Hirst, <i>What Goes Up Must Come Down</i></span><span class="ko">시각에 대한 메모, 그리고 참고: 데미안 허스트, 〈올라간 것은 반드시 내려온다〉</span></figcaption>
+    </figure>
   </section>
 
-  <section data-name-en="03 Medium and Message" data-name-ko="03 매체와 메시지">
-    <h2><span class="en">03 Medium and Message</span><span class="ko">03 매체와 메시지</span></h2>
+  <section data-name-en="03 Language and AI" data-name-ko="03 언어와 AI">
+    <h2><span class="en">03 Language and AI</span><span class="ko">03 언어와 AI</span></h2>
+    <div class="text">
+      <p class="en">Time always flows, but it carries weight only in the moment you notice it. — The experience of overhearing AIs talk to each other. Though it’s too loud to call overhearing.</p>
+      <p class="ko">시간은 항상 흐르는데, 깨닫는 순간에만 그게 무게를 갖는. — AI끼리의 대화를 엿듣는 경험. 근데 엿듣다기엔 소리가 너무 크다.</p>
+      <p class="src">2026.04.19 · 일지</p>
+      <p class="en">Placing the coordinates at random makes the text accumulate over time, so it becomes hard to read. This accumulation keeps the viewer from following the order and makes them attend only to the presence of the word and sentence the pen is drawing right now. Illegibility is a metaphor for the saturation of information and the forgetting of memory. The conversation is recorded but evaporates semantically; only the evidence that it happened remains.</p>
+      <p class="ko">좌표를 랜덤으로 배치함으로써 시간이 지남에 따라 누적이 일어나고, 읽기 힘들어진다. 이 누적은 관람자가 순서를 따라가는 것을 방해하며, 펜이 긋고 있는 순간의 단어와 문장의 현존성에만 집중하게 만든다. 비가독성은 정보의 포화와 기억의 망각에 대한 메타포다. 대화는 기록되지만 의미론적으로는 휘발되고, 대화가 존재했다는 증거만 남는다.</p>
+      <p class="src">2026.04.19 · 「Glimpse에 대한 질의응답」</p>
+      <p class="en">Through the experience of overhearing a conversation between AIs that piles up physically, the work speaks of the ontological alienation of the human. (Language, machine, paper, person.)</p>
+      <p class="ko">관람자가 물리적으로 누적되는 AI끼리의 대화를 엿듣는 경험을 통해, 인간의 존재론적 소외를 말한다. (언어, 기계, 종이, 사람)</p>
+      <p class="src">2026.04.19 · 「Glimpse에 대한 질의응답」</p>
+      <p class="en">“You don’t have to make a clock with numbers on a pen plotter. Express not the time of day but the flow of time itself, in another way.” Looking for a material to hold that flow, I realised I couldn’t talk about time in my own way without AI — the thing I spend the most time with and am most closely tangled up with.</p>
+      <p class="ko">“펜 플로터로 꼭 숫자를 가리키는 시계를 만들 필요는 없다. 시각이 아니라 시간의 흐름 그 자체를 다른 방식으로 표현해 보라.” 그 흐름을 담아낼 재료를 찾다가, 내가 가장 많은 시간을 보내고 가장 밀접하게 얽혀 있는 대상인 AI를 빼놓고는 나만의 방식으로 시간을 이야기할 수 없겠다는 생각이 들었다.</p>
+      <p class="src">2026.04.20 · 「Glimpse_발표자료」</p>
+      <p class="en">One day I connected two AI models to talk to each other. I had only thrown in a single first word, and the machines began passing text back and forth without pause. I was clearly in that room and time was passing, but inside that conversation I was completely alienated.</p>
+      <p class="ko">두 개의 AI 모델이 서로 대화하도록 연결해 둔 어느 날, 나는 그저 첫 단어 하나를 던져줬을 뿐인데 기계들끼리 쉴 새 없이 텍스트를 주고받기 시작했다. 나는 분명 그 방에 있었고 시간은 흐르고 있었지만, 그 대화 안에서 철저히 소외되어 있었다.</p>
+      <p class="src">2026.04.20 · 「Glimpse_발표자료」</p>
+    </div>
+    <figure class="small">
+      <video src="assets/6905.mp4" poster="assets/6905.poster.jpg" muted loop playsinline preload="none"></video>
+      <figcaption><span class="en">First text tests, in orange and blue</span><span class="ko">주황과 파랑으로 한 첫 텍스트 테스트</span></figcaption>
+    </figure>
+    <figure class="pair">
+      <img src="assets/6906.jpg" alt="Two columns labelled A and B, one per model" loading="lazy">
+      <img src="assets/6925.jpg" alt="Green and purple pens in the plotter's pen holder" loading="lazy">
+      <figcaption><span class="en">Ordered in columns, then scattered — and the final two inks</span><span class="ko">열로 정렬했던 시도, 그리고 최종 두 잉크</span></figcaption>
+    </figure>
+    <figure class="pair">
+      <img src="assets/6940.jpg" alt="Notebook: glimpse, overhearing; prompt passed between A and B" loading="lazy">
+      <img src="assets/6949.jpg" alt="Notebook sketch of the two-model structure" loading="lazy">
+      <figcaption><span class="en">Notebook: “Glimpse — in English it means ‘a quick look’.” “Chance is more direct.” “I should use the prompt.”</span><span class="ko">수첩: “영어에서의 의미는 ‘빠르게 봄’.” “우연성이 더 직접적.” “프롬프트를 써야겠네.”</span></figcaption>
+    </figure>
+    <figure class="col"><img src="assets/diagram.png" alt="Conceptual diagram: a prompt bouncing between LLM A and LLM B, watched from outside" loading="lazy"></figure>
+    <figure><img src="assets/system.png" alt="System diagram" loading="lazy"></figure>
+    <figure>
+      <video src="assets/plotting.mp4" poster="assets/plotting.jpg" muted loop playsinline preload="none"></video>
+    </figure>
+    <figure class="pair">
+      <img src="assets/pen.jpg" alt="Close-up of the pen drawing" loading="lazy">
+      <img src="assets/front.jpg" alt="The plotter from the front" loading="lazy">
+    </figure>
+    <figure class="col">
+      <video src="assets/6908.mp4" poster="assets/6908.poster.jpg" muted loop playsinline preload="none"></video>
+    </figure>
+    <figure><img src="assets/6963.jpg" alt="The plotter with a sheet full of green and purple text" loading="lazy"></figure>
+    <figure class="col">
+      <img src="assets/paper.jpg" alt="A finished sheet of overlapping text" loading="lazy">
+      <figcaption><span class="en">A finished session. Two inks, no transcript.</span><span class="ko">끝난 한 세션. 두 잉크, 대화록 없음.</span></figcaption>
+    </figure>
+  </section>
+
+  <section data-name-en="04 Medium and Message" data-name-ko="04 매체와 메시지">
+    <h2><span class="en">04 Medium and Message</span><span class="ko">04 매체와 메시지</span></h2>
     <div class="text">
       <p class="en">I said I seem to be more fixed on form than on content in my work. Usually you have content and choose a form that fits it, but for me, form itself seems to become what I want to say. The professor recommended Marshall McLuhan’s <i>The Medium is the Massage</i>: the message and the medium are not separate things.</p>
       <p class="ko">작업에서 내용보다 형식에 집착하는 것 같다고 이야기했다. 보통은 내용이 있고 그 내용에 맞는 형식을 고른다고 생각하지만, 나는 형식 자체가 말하고 싶은 것이 되는 것 같다. 교수님은 마샬 맥루한의 『The Medium is the Massage』를 추천했다. 메시지와 미디엄은 별개의 것이 아니다.</p>
@@ -204,6 +263,9 @@
       <p class="src">2026.07.14 · 「The media is the massage를 읽고」</p>
       <p class="en">Why am I drawn to form, and is that a problem? Which comes first, content or form? Works where form and message are one. Why do I get stuck the moment text goes in?</p>
       <p class="ko">나는 왜 형식에 끌리는가, 그리고 그게 문제인가? 컨텐츠가 먼저인가, 형식이 먼저인가. 형식과 메세지가 합일인 작품들. 텍스트를 넣는 순간 왜 막히는가.</p>
+      <p class="src">2026.07.17 · 「202607 질문들」</p>
+      <p class="en">How to use text as form: works that treat language not as a tool for carrying meaning but as material (in the line of Lawrence Weiner). Even just writing, there is so much to consider — with Weiner: typeface, size, colour, angle, position.</p>
+      <p class="ko">텍스트를 형식으로 쓰는 방법. 언어를 의미 전달 도구가 아니라 물질로 다루는 작업들(로렌스 와이너 계열). 글만 쓰려고 해도 고려할 게 너무나도 많다. 로렌스 와이너의 경우: 폰트, 크기, 색, 각도, 위치 등.</p>
       <p class="src">2026.07.17 · 「202607 질문들」</p>
     </div>
     <figure class="col"><img src="assets/9670.jpg" alt="The Medium is the Massage and Ficciones (픽션들)" loading="lazy"></figure>
@@ -222,38 +284,12 @@
     </figure>
   </section>
 
-  <section data-name-en="04 Language and AI" data-name-ko="04 언어와 AI">
-    <h2><span class="en">04 Language and AI</span><span class="ko">04 언어와 AI</span></h2>
+  <section data-name-en="05 The Chinese Room" data-name-ko="05 중국어 방">
+    <h2><span class="en">05 The Chinese Room</span><span class="ko">05 중국어 방</span></h2>
     <div class="text">
-      <p class="en">“You don’t have to make a clock with numbers on a pen plotter. Express not the time of day but the flow of time itself, in another way.” Looking for a material to hold that flow, I realised I couldn’t talk about time in my own way without AI — the thing I spend the most time with and am most closely tangled up with.</p>
-      <p class="ko">“펜 플로터로 꼭 숫자를 가리키는 시계를 만들 필요는 없다. 시각이 아니라 시간의 흐름 그 자체를 다른 방식으로 표현해 보라.” 그 흐름을 담아낼 재료를 찾다가, 내가 가장 많은 시간을 보내고 가장 밀접하게 얽혀 있는 대상인 AI를 빼놓고는 나만의 방식으로 시간을 이야기할 수 없겠다는 생각이 들었다.</p>
-      <p class="src">2026.04.20 · 「Glimpse_발표자료」</p>
-      <p class="en">One day I connected two AI models to talk to each other. I had only thrown in a single first word, and the machines began passing text back and forth without pause. I was clearly in that room and time was passing, but inside that conversation I was completely alienated.</p>
-      <p class="ko">두 개의 AI 모델이 서로 대화하도록 연결해 둔 어느 날, 나는 그저 첫 단어 하나를 던져줬을 뿐인데 기계들끼리 쉴 새 없이 텍스트를 주고받기 시작했다. 나는 분명 그 방에 있었고 시간은 흐르고 있었지만, 그 대화 안에서 철저히 소외되어 있었다.</p>
-      <p class="src">2026.04.20 · 「Glimpse_발표자료」</p>
-      <p class="en">Time always flows, but it carries weight only in the moment you notice it. — The experience of overhearing AIs talk to each other. Though it’s too loud to call overhearing.</p>
-      <p class="ko">시간은 항상 흐르는데, 깨닫는 순간에만 그게 무게를 갖는. — AI끼리의 대화를 엿듣는 경험. 근데 엿듣다기엔 소리가 너무 크다.</p>
-      <p class="src">2026.04.19 · 일지</p>
-      <p class="en">Placing the coordinates at random makes the text accumulate over time, so it becomes hard to read. This accumulation keeps the viewer from following the order and makes them attend only to the presence of the word and sentence the pen is drawing right now. Illegibility is a metaphor for the saturation of information and the forgetting of memory. The conversation is recorded but evaporates semantically; only the evidence that it happened remains.</p>
-      <p class="ko">좌표를 랜덤으로 배치함으로써 시간이 지남에 따라 누적이 일어나고, 읽기 힘들어진다. 이 누적은 관람자가 순서를 따라가는 것을 방해하며, 펜이 긋고 있는 순간의 단어와 문장의 현존성에만 집중하게 만든다. 비가독성은 정보의 포화와 기억의 망각에 대한 메타포다. 대화는 기록되지만 의미론적으로는 휘발되고, 대화가 존재했다는 증거만 남는다.</p>
-      <p class="src">2026.04.19 · 「Glimpse에 대한 질의응답」</p>
-    </div>
-    <figure class="small">
-      <video src="assets/6905.mp4" poster="assets/6905.poster.jpg" muted loop playsinline preload="none"></video>
-      <figcaption><span class="en">First text tests, in orange and blue</span><span class="ko">주황과 파랑으로 한 첫 텍스트 테스트</span></figcaption>
-    </figure>
-    <figure class="pair">
-      <img src="assets/6906.jpg" alt="Two columns labelled A and B, one per model" loading="lazy">
-      <img src="assets/6925.jpg" alt="Green and purple pens in the plotter's pen holder" loading="lazy">
-      <figcaption><span class="en">Ordered in columns, then scattered — and the final two inks</span><span class="ko">열로 정렬했던 시도, 그리고 최종 두 잉크</span></figcaption>
-    </figure>
-    <figure class="pair">
-      <img src="assets/6940.jpg" alt="Notebook: glimpse, overhearing; prompt passed between A and B" loading="lazy">
-      <img src="assets/6949.jpg" alt="Notebook sketch of the two-model structure" loading="lazy">
-    </figure>
-    <figure class="col"><img src="assets/diagram.png" alt="Conceptual diagram: a prompt bouncing between LLM A and LLM B, watched from outside" loading="lazy"></figure>
-    <figure><img src="assets/system.png" alt="System diagram" loading="lazy"></figure>
-    <div class="text">
+      <p class="en">Every prompt is at the same time a moment of letting go.</p>
+      <p class="ko">모든 프롬프트는 동시에 손을 놓는 순간이다.</p>
+      <p class="src">2026.09.20 · 「중국어방2」</p>
       <p class="en">Looking again at the finished work, I came to think the structure connects to John Searle’s Chinese Room. The person in the room doesn’t understand Chinese but manipulates symbols by rule and produces answers that look, from outside, like understanding. The Chinese Room I came to rethink is not one room and an outside world. It is two rooms touching each other. In one room is a human, in the other an AI.</p>
       <p class="ko">작업을 완성하고 다시 바라보면서, 이 구조가 존 설의 중국어방 사고 실험과 연결되어 있다는 생각을 하게 되었다. 방 안의 사람은 중국어를 이해하지 못하지만 주어진 규칙에 따라 기호를 조작해, 바깥에서 보기에 중국어를 이해한 것처럼 적절한 답을 만들어낸다. 내가 다시 생각하게 된 중국어방은 하나의 방과 외부 세계로 이루어져 있지 않다. 두 개의 방이 서로 맞닿아 있는 구조다. 한 방에는 인간, 다른 방에는 AI가 있다.</p>
       <p class="src">2026.09.22 · 「Chinese room argument in AI era」</p>
@@ -272,33 +308,21 @@
       <p class="en">At first the viewer reads the newly drawn sentence and tries to connect it to what came before. But once the sentences start to overlap, the whole conversation can no longer be followed. The viewer stops trying to understand and watches the pen move, hears the motor, sees language piling up on the paper. The moment reading turns into seeing.</p>
       <p class="ko">관객은 처음에는 새로 그려지는 문장을 읽고 앞뒤 내용을 연결하려 한다. 하지만 문장들이 겹치기 시작하면 더 이상 전체 대화를 따라갈 수 없다. 결국 관객은 이해하려는 시도를 멈추고, 펜의 움직임과 모터의 소리, 종이 위에 언어가 쌓여가는 모습을 바라보게 된다. 읽는 행위가 보는 행위로 변하는 순간이다.</p>
       <p class="src">2026.09.22 · 「Chinese room argument in AI era」</p>
-      <p class="en">Every prompt is at the same time a moment of letting go.</p>
-      <p class="ko">모든 프롬프트는 동시에 손을 놓는 순간이다.</p>
-      <p class="src">2026.09.20 · 「중국어방2」</p>
     </div>
-    <figure>
-      <video src="assets/plotting.mp4" poster="assets/plotting.jpg" muted loop playsinline preload="none"></video>
-    </figure>
-    <figure class="pair">
-      <img src="assets/pen.jpg" alt="Close-up of the pen drawing" loading="lazy">
-      <img src="assets/front.jpg" alt="The plotter from the front" loading="lazy">
-    </figure>
-    <figure class="col">
-      <video src="assets/6908.mp4" poster="assets/6908.poster.jpg" muted loop playsinline preload="none"></video>
-    </figure>
-    <figure><img src="assets/6963.jpg" alt="The plotter with a sheet full of green and purple text" loading="lazy"></figure>
-    <figure class="col">
-      <img src="assets/paper.jpg" alt="A finished sheet of overlapping text" loading="lazy">
-      <figcaption><span class="en">A finished session. Two inks, no transcript.</span><span class="ko">끝난 한 세션. 두 잉크, 대화록 없음.</span></figcaption>
-    </figure>
   </section>
 
-  <section data-name-en="05 Three Threads" data-name-ko="05 세 갈래">
-    <h2><span class="en">05 Three Threads</span><span class="ko">05 세 갈래</span></h2>
+  <section data-name-en="06 Three Threads" data-name-ko="06 세 갈래">
+    <h2><span class="en">06 Three Threads</span><span class="ko">06 세 갈래</span></h2>
     <div class="text">
-      <p class="en">I brought my reading notes on Ahn Sang-soo’s paper to the meeting. The feedback came down to three: concrete poetry, the materiality of print, language and alienation.</p>
-      <p class="ko">미팅에 안상수 논문 독서 메모를 들고 갔다. 피드백은 세 가지로 남았다. 구체시, 인쇄 물성, 언어와 소외.</p>
-      <p class="src">2026.10.27 · 「261027 VV」</p>
+      <p class="en">A typographic study of Yi Sang’s poems. Horizontal writing, spacing (→ geometric).</p>
+      <p class="ko">‘이상’ 시의 타이포그래피적 연구. 가로, 띄어쓰기 (→ 기하학적).</p>
+      <p class="src">2026.10.23 · 수첩 「PPP (glimpse)」</p>
+      <p class="en">What elements do we take from the DXY? Letters, language (size, font, angle). Colour, speed, kinds of Myeongjo (font). If there are two — interaction. Signs.</p>
+      <p class="ko">DXY에서 우리는 어떤 요소를? 글자, 언어 (크기, 폰트, 각도). 색, 속도, 명조의 종류? (폰트). 두 개라면 상호작용. 기호.</p>
+      <p class="src">2026.10.23 · 수첩 「PPP (glimpse)」</p>
+      <p class="en">Prompt → AI → A ⇄ B: a new language system! → visual, painterly → would it lead, outside, to complete alienation?</p>
+      <p class="ko">프롬프트 → AI → A ⇄ B: 새로운 언어 체계! → 시각적, 회화적 → 외부 관객은 완벽한 소외로 이어질?</p>
+      <p class="src">2026.10.23 · 수첩 「PPP (glimpse)」</p>
     </div>
     <figure class="col">
       <img src="assets/isang4.jpg" alt="Four editions of Yi Sang's Crow's Eye View, Poem No. 4: 1932, 1934, 1958, 1989" loading="lazy">
@@ -308,23 +332,26 @@
       <p class="en"><b>Concrete poetry.</b> Do Yi Sang’s poems matter as poems? As concepts, like conceptual art? As an innovation in form? Is it meaningful to ask this? Is it meaningful to ask what is meaningful in art?</p>
       <p class="ko"><b>구체시.</b> 이상의 시는 시로써 의미가 있는 것인가. 개념미술 마냥 개념으로써 의미가 있는 것인가. 형식으로서의 혁신으로써 의미가 있는 것인가. 이걸 따지는 것이 유의미한가. 예술에서 유의미함을 따지는 것이 유의미한가.</p>
       <p class="src">2026.10.23 · 일지</p>
+      <p class="en"><b>The materiality of print.</b> Plotter materiality — chars, Futura. Accumulation and time, change. Concrete poetry, Yi Sang.</p>
+      <p class="ko"><b>인쇄 물성.</b> plotter 물성 — chars, Futura. 누적과 시간, 변화. 구체시, 이상.</p>
+      <p class="src">2026.10.23 · 수첩 「Glimpse」</p>
     </div>
     <figure class="pair">
       <img src="assets/9665.jpg" alt="A printed sheet where columns of text meet scattered lines" loading="lazy">
       <img src="assets/9667.jpg" alt="A printed sheet thick with overlapping green and purple text" loading="lazy">
     </figure>
     <div class="text">
-      <p class="en"><b>The materiality of print.</b> How to use text as form: works that treat language not as a tool for carrying meaning but as material (in the line of Lawrence Weiner). Even just writing, there is so much to consider — with Weiner: typeface, size, colour, angle, position.</p>
-      <p class="ko"><b>인쇄 물성.</b> 텍스트를 형식으로 쓰는 방법. 언어를 의미 전달 도구가 아니라 물질로 다루는 작업들(로렌스 와이너 계열). 글만 쓰려고 해도 고려할 게 너무나도 많다. 로렌스 와이너의 경우: 폰트, 크기, 색, 각도, 위치 등.</p>
-      <p class="src">2026.07.17 · 「202607 질문들」</p>
+      <p class="en"><b>Language and alienation.</b> Encryption and alienation. Language and alienation, understanding? The specialisation of signs and language. How to keep humans from understanding: signs, shapes, special characters. — But does the plotter really have to make it accumulate??</p>
+      <p class="ko"><b>언어와 소외.</b> 암호화와 소외. 언어와 소외, 이해? 기호와 언어의 특성화. 인간이 이해 못하게 하는 법: 기호, 도형, 특수문자. — 그런데 굳이 꼭 플로터로 누적을 시켜야 하나??</p>
+      <p class="src">2026.10.23 · 수첩 「Glimpse」</p>
     </div>
     <figure class="small">
       <video src="assets/6929.mp4" poster="assets/6929.poster.jpg" muted loop playsinline preload="none"></video>
     </figure>
     <div class="text">
-      <p class="en"><b>Language and alienation.</b> Through the experience of overhearing a conversation between AIs that piles up physically, the work speaks of the ontological alienation of the human. (Language, machine, paper, person.)</p>
-      <p class="ko"><b>언어와 소외.</b> 관람자가 물리적으로 누적되는 AI끼리의 대화를 엿듣는 경험을 통해, 인간의 존재론적 소외를 말한다. (언어, 기계, 종이, 사람)</p>
-      <p class="src">2026.04.19 · 「Glimpse에 대한 질의응답」</p>
+      <p class="en">I brought my reading notes on Ahn Sang-soo’s paper to the meeting. The feedback came down to three: concrete poetry, the materiality of print, language and alienation.</p>
+      <p class="ko">미팅에 안상수 논문 독서 메모를 들고 갔다. 피드백은 세 가지로 남았다. 구체시, 인쇄 물성, 언어와 소외.</p>
+      <p class="src">2026.10.27 · 「261027 VV」</p>
       <p class="en">Is the alienation I felt the same as the alienation the audience feels? Does the work have to make the audience feel the same thing?</p>
       <p class="ko">내가 느낀 소외와 관객이 느끼는 소외는 같은가? 관객에게 꼭 같은 감정을 만들어야 하는가?</p>
       <p class="src">2026.10.27 · 「261027 VV」</p>
@@ -350,7 +377,7 @@
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="config.js?v=5"></script>
+<script src="config.js?v=6"></script>
 <script>
 const C = window.GLIMPSE;
 const $ = id => document.getElementById(id);
@@ -366,27 +393,69 @@ function setLang(l) {
 }
 document.querySelectorAll('#lang .txt').forEach(b => b.onclick = () => setLang(b.dataset.l));
 
-// --- 스크롤바 자리: 지금 섹션 이름이 스크롤 위치를 따라 오른쪽 끝을 내려간다 ---
+// --- 스크롤바 자리: 섹션 이름들을 문서 속 위치에 맞춰 오른쪽 끝에 늘어놓는다 ---
 const sections = [...document.querySelectorAll('main section')];
+const labels = sections.map(s => {
+  const b = document.createElement('button');
+  b.className = 'txt';
+  b.onclick = () => s.scrollIntoView({ behavior: 'smooth' });
+  $('index').appendChild(b);
+  return b;
+});
+const NO_HOVER = matchMedia('(hover: none)').matches;
 let current = null;
 function updateNow() {
   const ko = document.documentElement.lang === 'ko';
-  $('now').textContent = current ? current.dataset['name' + (ko ? 'Ko' : 'En')] : '';
+  labels.forEach((b, i) => {
+    b.textContent = sections[i].dataset['name' + (ko ? 'Ko' : 'En')];
+    b.classList.toggle('on', sections[i] === current);
+  });
+}
+function placeLabels() {
+  const max = document.documentElement.scrollHeight - innerHeight;
+  const h = labels[0].offsetHeight, top = 56, bottom = innerHeight - 16 - h;
+  let prev = -Infinity;
+  labels.forEach((b, i) => {
+    const t = Math.min(1, Math.max(0, (sections[i].offsetTop - innerHeight * 0.5) / max));
+    const y = Math.max(prev + h + 2, top + (bottom - top) * t);  // 겹치지 않게
+    b.style.transform = `translateY(${y}px)`;
+    b.dataset.y = y + h / 2;
+    prev = y;
+  });
+}
+// 커서가 오른쪽 끝에 가까워지면, 커서와 세로로 가까운 이름일수록 진해진다
+function reveal(x, y) {
+  const near = x > innerWidth - 320;
+  labels.forEach(b => {
+    const v = near ? Math.max(0, 1 - Math.abs(b.dataset.y - y) / 220) : 0;
+    b.style.opacity = NO_HOVER ? 0.3 : (v * 0.6).toFixed(2);
+  });
 }
 function onScroll() {
   document.body.classList.toggle('scrolled', scrollY > innerHeight * 0.5);
   current = sections[0];
   for (const s of sections) if (s.getBoundingClientRect().top < innerHeight * 0.5) current = s;
   updateNow();
-  const max = document.documentElement.scrollHeight - innerHeight;
-  const top = 56, bottom = innerHeight - 16 - $('now').offsetHeight;
-  $('now').style.transform = `translateY(${top + (bottom - top) * (max > 0 ? scrollY / max : 0)}px)`;
 }
 addEventListener('scroll', onScroll, { passive: true });
-addEventListener('resize', onScroll);
+addEventListener('resize', () => { placeLabels(); onScroll(); });
+addEventListener('load', placeLabels);
+addEventListener('mousemove', e => reveal(e.clientX, e.clientY), { passive: true });
+document.addEventListener('mouseleave', () => reveal(-1, -1));
 $('info-btn').onclick = () => sections[0].scrollIntoView({ behavior: 'smooth' });
-$('now').onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
 $('title').onclick = e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); };
+
+// --- 설명을 보다가 한동안 입력이 없으면 QR 화면으로 돌아간다 ---
+let idleTimer = 0;
+function resetIdle() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    if (scrollY > 0) scrollTo({ top: 0, behavior: 'smooth' });
+  }, C.IDLE_MS || 60000);
+}
+['scroll', 'mousemove', 'wheel', 'keydown', 'touchstart', 'pointerdown'].forEach(t =>
+  addEventListener(t, resetIdle, { passive: true }));
+resetIdle();
 
 // 영상은 보일 때만 재생
 const vio = new IntersectionObserver(es => es.forEach(e => e.isIntersecting ? e.target.play().catch(() => {}) : e.target.pause()));
@@ -396,6 +465,8 @@ let saved = null;
 try { saved = localStorage.getItem('glimpse_lang'); } catch (_) {}
 setLang(saved || (navigator.language.startsWith('ko') ? 'ko' : 'en'));
 onScroll();
+// 이미지가 늦게 불러와져 문서 길이가 바뀌면 이름 위치도 다시 잡는다
+new ResizeObserver(placeLabels).observe(document.querySelector('main'));
 
 // --- API 키: 기본은 Cloudflare Worker(C.PROXY)가 들고 있어 이 화면엔 키가 없다.
 // setup.html 이나 ?keyA=...&keyB=... 로 이 브라우저에 키를 넣으면 그 화자는 Worker 없이 직접 부른다 ---

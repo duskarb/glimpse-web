@@ -16,6 +16,7 @@ window.GLIMPSE = {
   CHAR_MS: 35,           // 글자당 최대 지연. 글이 길면 세션 안에 끝나도록 자동으로 빨라짐
   PAUSE_MS: 800,         // 발화 사이 쉬는 시간
   HOLD_MS: 12000,        // 끝난 뒤 결과를 보여주는 시간
+  IDLE_MS: 60000,        // 설명을 보다가 이만큼 아무 입력이 없으면 QR 화면으로 돌아감
   MAX_INPUT: 200,
   // Gemini 키를 들고 있는 Cloudflare Worker (worker/ 폴더). 키는 Worker 비밀값에만 있다
   PROXY: 'https://glimpse-speak.prism011312.workers.dev',
