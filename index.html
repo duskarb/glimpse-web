@@ -1526,21 +1526,16 @@
           b.classList.toggle("on", sections[i] === current);
         });
       }
+      // 이름들을 위에서 아래까지 같은 간격으로 늘어놓는다
       function placeLabels() {
-        const max = document.documentElement.scrollHeight - innerHeight;
         const h = labels[0].offsetHeight,
           top = 56,
-          bottom = innerHeight - 16 - h;
-        let prev = -Infinity;
+          bottom = innerHeight - 16 - h,
+          step = (bottom - top) / Math.max(1, labels.length - 1);
         labels.forEach((b, i) => {
-          const t = Math.min(
-            1,
-            Math.max(0, (sections[i].offsetTop - innerHeight * 0.5) / max),
-          );
-          const y = Math.max(prev + h + 2, top + (bottom - top) * t); // 겹치지 않게
+          const y = top + step * i;
           b.style.transform = `translateY(${y}px)`;
           b.dataset.y = y + h / 2;
-          prev = y;
         });
       }
       // 커서가 오른쪽 끝에 가까워지면, 커서와 세로로 가까운 이름일수록 진해진다
