@@ -1938,17 +1938,124 @@
         lib.src =
           "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
         lib.onload = () => {
-          new QRCode($("qr"), {
+          // 라이브러리로는 모듈 배열만 얻고, 그림은 아래에서 일그러뜨려 직접 그린다
+          const q = new QRCode(document.createElement("div"), {
             text: inputUrl.href,
-            width: 240,
-            height: 240,
-            colorDark: "#000",
-            colorLight: "#fff",
             correctLevel: QRCode.CorrectLevel.M,
           });
+          warpQR(q._oQRCode);
           $("qr").title = inputUrl.href;
         };
         document.head.appendChild(lib);
+      }
+
+      // QR은 원근으로 일그러져도 읽힌다. 네 꼭짓점을 따로 스프링에 매달아
+      // 들쭉날쭉하게 끌려다니게 하고, 매 프레임 그 사각형 안에 코드를 다시 그린다
+      function warpQR(model) {
+        const n = model.getModuleCount();
+        const QUIET = 4; // 인식에 필요한 흰 여백(모듈 단위)
+        const N = n + QUIET * 2;
+        const S = 240; // 일그러지기 전 한 변
+        const R = S * 0.17; // 꼭짓점이 움직이는 최대 거리
+        const W = S + R * 2 + 8;
+        const dpr = window.devicePixelRatio || 1;
+        const cv = document.createElement("canvas");
+        cv.width = cv.height = Math.round(W * dpr);
+        cv.style.width = cv.style.height = W + "px";
+        $("qr").appendChild(cv);
+        const ctx = cv.getContext("2d");
+
+        // 가로로 이어진 검은 모듈은 한 덩어리로 묶어 둔다
+        const runs = [];
+        for (let r = 0; r < n; r++) {
+          for (let c = 0; c < n; c++) {
+            if (!model.isDark(r, c)) continue;
+            const c0 = c;
+            while (c + 1 < n && model.isDark(r, c + 1)) c++;
+            runs.push([QUIET + c0, QUIET + c + 1, QUIET + r]);
+          }
+        }
+
+        const o = (W - S) / 2;
+        const home = [
+          [o, o],
+          [o + S, o],
+          [o + S, o + S],
+          [o, o + S],
+        ];
+        // 조금 덜 감쇠시킨 스프링이라 목표를 지나쳤다 돌아오며 쫀득하게 흔들린다
+        const corners = home.map(([x, y]) => ({
+          x, y, vx: 0, vy: 0, tx: x, ty: y, hx: x, hy: y,
+          next: Math.random() * 1.5,
+        }));
+        const K = 90;
+        const D = 7;
+
+        // 단위 정사각형 → 네 꼭짓점 사각형으로 보내는 원근 변환
+        function homography(p) {
+          const [x0, y0] = p[0], [x1, y1] = p[1], [x2, y2] = p[2], [x3, y3] = p[3];
+          const sx = x0 - x1 + x2 - x3, sy = y0 - y1 + y2 - y3;
+          const dx1 = x1 - x2, dx2 = x3 - x2, dy1 = y1 - y2, dy2 = y3 - y2;
+          const den = dx1 * dy2 - dx2 * dy1;
+          const g = (sx * dy2 - dx2 * sy) / den;
+          const h = (dx1 * sy - sx * dy1) / den;
+          const a = x1 - x0 + g * x1, b = x3 - x0 + h * x3;
+          const d = y1 - y0 + g * y1, e = y3 - y0 + h * y3;
+          return (u, v) => {
+            const w = g * u + h * v + 1;
+            return [(a * u + b * v + x0) / w, (d * u + e * v + y0) / w];
+          };
+        }
+
+        let last = performance.now();
+        let t = 0;
+        function frame(now) {
+          requestAnimationFrame(frame);
+          const dt = Math.min(0.05, (now - last) / 1000);
+          last = now;
+          t += dt;
+          if ($("qr").classList.contains("hidden")) return;
+
+          for (const k of corners) {
+            if (t > k.next) {
+              // 새 자리로 홱 당긴다. 가끔은 제자리 근처로 돌아온다
+              const a = Math.random() * Math.PI * 2;
+              const m = Math.random() < 0.25 ? R * 0.2 : R * (0.4 + Math.random() * 0.6);
+              k.tx = k.hx + Math.cos(a) * m;
+              k.ty = k.hy + Math.sin(a) * m;
+              k.next = t + 0.5 + Math.random() * 1.8;
+            }
+            k.vx += (K * (k.tx - k.x) - D * k.vx) * dt;
+            k.vy += (K * (k.ty - k.y) - D * k.vy) * dt;
+            k.x += k.vx * dt;
+            k.y += k.vy * dt;
+          }
+
+          const map = homography(corners.map((k) => [k.x, k.y]));
+          const P = (c, r) => map(c / N, r / N);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, W, W);
+          // 흰 여백까지 함께 일그러뜨린다
+          ctx.fillStyle = "#fff";
+          ctx.beginPath();
+          quad(P(0, 0), P(N, 0), P(N, N), P(0, N));
+          ctx.fill();
+          // 한 경로로 모아 한 번에 채워야 모듈 사이에 실금이 안 생긴다
+          ctx.fillStyle = "#000";
+          ctx.beginPath();
+          for (const [c0, c1, r] of runs) {
+            quad(P(c0, r), P(c1, r), P(c1, r + 1), P(c0, r + 1));
+          }
+          ctx.fill();
+        }
+        function quad(a, b, c, d) {
+          ctx.moveTo(a[0], a[1]);
+          ctx.lineTo(b[0], b[1]);
+          ctx.lineTo(c[0], c[1]);
+          ctx.lineTo(d[0], d[1]);
+          ctx.closePath();
+        }
+        requestAnimationFrame(frame);
       }
 
       // --- 폰 입력 수신 (ntfy SSE) ---
