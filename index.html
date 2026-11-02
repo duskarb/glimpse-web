@@ -312,6 +312,17 @@
       body.asking {
         overflow: hidden;
       }
+      /* 팝업을 닫은 뒤 다시 여는 버튼: QR로 들어온 폰에서만, 왼쪽 위 */
+      #ask-open {
+        display: none;
+        position: fixed;
+        top: 20px;
+        left: 16px;
+        z-index: 5;
+      }
+      body.can-ask:not(.asking) #ask-open {
+        display: block;
+      }
       body.asking #index {
         display: none;
       }
@@ -433,6 +444,9 @@
 
     <div id="paper"></div>
     <div id="veil"></div>
+    <button id="ask-open" class="txt">
+      <span class="en">send prompt</span><span class="ko">문장 보내기</span>
+    </button>
     <div id="ask" hidden>
       <form id="ask-f">
         <textarea id="ask-t" required></textarea>
@@ -1926,8 +1940,34 @@
           msg = $("ask-msg");
         const ko = () => document.documentElement.lang === "ko";
         t.maxLength = C.MAX_INPUT;
-        ask.hidden = false;
-        document.body.classList.add("asking");
+        document.body.classList.add("can-ask");
+        function openAsk() {
+          if (ask.hidden) {
+            // 숨겨져 있던 팝업도 스르륵 나타나게, 투명한 상태로 먼저 그린다
+            ask.classList.add("gone");
+            ask.hidden = false;
+            void ask.offsetWidth;
+          }
+          ask.classList.remove("gone");
+          msg.textContent = "";
+          b.disabled = false;
+          document.body.classList.add("asking");
+        }
+        async function closeAsk() {
+          t.blur();
+          ask.classList.add("gone");
+          document.body.classList.remove("asking");
+          await sleep(1000);
+          if (ask.classList.contains("gone")) ask.hidden = true;
+        }
+        openAsk();
+        // 흰 띠 바깥(위아래로 흐려지는 부분)을 누르면 닫힌다
+        ask.addEventListener("click", (e) => {
+          const y = e.clientY / innerHeight;
+          if (e.target === ask && (y < 0.3 || y > 0.7)) closeAsk();
+        });
+        // 왼쪽 위 버튼으로 다시 연다
+        $("ask-open").onclick = openAsk;
         $("ask-f").onsubmit = async (e) => {
           e.preventDefault();
           const text = t.value.replace(/\s+/g, " ").trim();
@@ -1939,13 +1979,11 @@
               body: text,
             });
             if (!res.ok) throw new Error(res.status);
+            t.value = "";
             t.blur();
             msg.textContent = ko() ? "보냈어요. 화면을 보세요." : "Sent. Look at the screen.";
             await sleep(700);
-            ask.classList.add("gone");
-            document.body.classList.remove("asking");
-            await sleep(1000);
-            ask.hidden = true;
+            closeAsk();
           } catch (_) {
             msg.textContent = ko()
               ? "보내지 못했어요. 다시 시도해 주세요."
