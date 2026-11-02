@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
     <title>Glimpse</title>
     <style>
       :root {
@@ -106,6 +107,10 @@
       }
       #index .txt.on {
         opacity: 1 !important;
+      }
+
+      #topfade {
+        display: none;
       }
 
       /* --- 한동안 입력이 없을 때 흰 막으로 덮었다 걷으며 QR 화면으로 --- */
@@ -250,17 +255,17 @@
       /* --- 폰 입력 팝업: 설명 화면 위, 위아래로 흐려지는 흰 띠 가운데에 입력창 --- */
       #ask {
         position: fixed;
-        inset: -400px 0;
+        inset: 0;
         z-index: 30;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 400px 16px;
+        padding: 0 16px;
         background: linear-gradient(
-          rgba(255, 255, 255, 0) 400px,
-          #fff calc(400px + 30vh),
-          #fff calc(400px + 70vh),
-          rgba(255, 255, 255, 0) calc(400px + 100vh)
+          rgba(255, 255, 255, 0),
+          #fff 30%,
+          #fff 70%,
+          rgba(255, 255, 255, 0)
         );
         transition: opacity 1s ease;
       }
@@ -323,8 +328,9 @@
       body.can-ask:not(.asking) #ask-open {
         display: block;
       }
-      body.asking #index {
-        display: none;
+      /* 팝업이 떠 있어도 아래 흰 띠는 남겨 둔다(iOS 주소창 자리 색). 이름만 숨긴다 */
+      body.asking #index .txt {
+        visibility: hidden;
       }
 
       /* --- 읽기 전용 화면(?read): QR과 세션 종이 없이 설명부터 --- */
@@ -343,21 +349,28 @@
           line-height: 1.6;
         }
         /* 위에 고정된 제목·언어 버튼 뒤로 글이 지나가도 겹쳐 보이지 않게 */
-        /* iOS Safari는 상태바·주소창 밑으로도 글을 비쳐 보이게 그린다.
-           화면 전체를 쓰고(viewport-fit=cover), 흰 막을 화면 밖까지 400px 늘려 그 틈까지 덮는다 */
-        body::before {
-          content: "";
+        /* iOS Safari 26은 화면 밖에 놓인 요소는 그리지 않고, 위·아래 가장자리에
+           닿은 고정 요소의 배경색(background-color)으로 상태바·주소창 자리를 칠한다.
+           그래서 가장자리에 단색 흰 띠를 붙이고, 그 안쪽에 그라데이션을 잇는다 */
+        #topfade {
+          display: block;
           position: fixed;
-          top: -400px;
+          top: 0;
           left: 0;
           right: 0;
-          height: calc(464px + env(safe-area-inset-top));
+          height: calc(44px + env(safe-area-inset-top));
           z-index: 4;
-          background: linear-gradient(
-            #fff calc(435px + env(safe-area-inset-top)),
-            rgba(255, 255, 255, 0)
-          );
+          background-color: #fff;
           pointer-events: none;
+        }
+        #topfade::after {
+          content: "";
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          height: 24px;
+          background: linear-gradient(#fff, rgba(255, 255, 255, 0));
         }
         main,
         body.read main {
@@ -397,14 +410,25 @@
         }
         /* 오른쪽 목차 대신, 아래쪽에 지금 섹션 이름만. 누르면 전체 목록이 펼쳐진다 */
         #index {
-          inset: auto 0 -400px 0;
+          inset: auto 0 0 0;
           width: auto;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 6px;
-          padding: 28px 16px calc(414px + env(safe-area-inset-bottom));
-          background: linear-gradient(rgba(255, 255, 255, 0), #fff 28px);
+          padding: 4px 16px calc(14px + env(safe-area-inset-bottom));
+          background-color: #fff;
+        }
+        /* 아래 단색 띠 위로 글이 스르륵 사라지게 */
+        #index::before {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 100%;
+          height: 28px;
+          background: linear-gradient(rgba(255, 255, 255, 0), #fff);
+          pointer-events: none;
         }
         #index .txt {
           position: static;
@@ -442,6 +466,7 @@
     <button id="info-btn" class="txt">information</button>
     <nav id="index"></nav>
 
+    <div id="topfade"></div>
     <div id="paper"></div>
     <div id="veil"></div>
     <button id="ask-open" class="txt">
