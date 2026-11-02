@@ -17,10 +17,18 @@
         background: #fff;
         color: #000;
       }
+      /* 문서(html)는 움직이지 않고 body 안에서 스크롤한다. iOS Safari 26은 상태바·주소창
+         밑에 스크롤되는 문서 내용을 비쳐 그리는데, 문서가 멈춰 있으면 그 자리는 html의 흰 바탕이 된다 */
       html {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        height: 100%;
+        overflow-y: auto;
         scrollbar-width: none;
       }
-      html::-webkit-scrollbar {
+      body::-webkit-scrollbar {
         display: none;
       }
       body {
@@ -1714,6 +1722,8 @@
     <script>
       const C = window.GLIMPSE;
       const $ = (id) => document.getElementById(id);
+      // 스크롤은 창이 아니라 body에서 일어난다 (CSS 참고)
+      const SC = document.body;
       const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       const status = (t) => {
         $("status").textContent = t || "";
@@ -1746,8 +1756,8 @@
       async function goTo(s) {
         s.scrollIntoView({ behavior: "smooth" });
         let last = -1;
-        while (Math.abs(scrollY - last) > 1) {
-          last = scrollY;
+        while (Math.abs(SC.scrollTop - last) > 1) {
+          last = SC.scrollTop;
           await sleep(200);
         }
         if (Math.abs(s.getBoundingClientRect().top) > 4)
@@ -1809,14 +1819,14 @@
       function onScroll() {
         document.body.classList.toggle(
           "scrolled",
-          READ || scrollY > innerHeight * 0.5,
+          READ || SC.scrollTop > innerHeight * 0.5,
         );
         current = sections[0];
         for (const s of sections)
           if (s.getBoundingClientRect().top < innerHeight * 0.5) current = s;
         updateNow();
       }
-      addEventListener("scroll", onScroll, { passive: true });
+      SC.addEventListener("scroll", onScroll, { passive: true });
       addEventListener("resize", () => {
         placeLabels();
         onScroll();
@@ -1830,7 +1840,7 @@
         sections[0].scrollIntoView({ behavior: "smooth" });
       $("title").onclick = (e) => {
         e.preventDefault();
-        scrollTo({ top: 0, behavior: "smooth" });
+        SC.scrollTo({ top: 0, behavior: "smooth" });
       };
 
       // --- 설명을 보다가 한동안 입력이 없으면 QR 화면으로 돌아간다 ---
@@ -1839,11 +1849,11 @@
         if (READ) return;
         clearTimeout(idleTimer);
         idleTimer = setTimeout(async () => {
-          if (scrollY === 0) return;
+          if (SC.scrollTop === 0) return;
           // 스크롤로 끌어올리지 않고, 흰 막으로 천천히 덮은 뒤 맨 위로 옮겨 다시 걷는다
           $("veil").classList.add("on");
           await sleep(1300);
-          scrollTo({ top: 0, behavior: "instant" });
+          SC.scrollTo({ top: 0, behavior: "instant" });
           $("veil").classList.remove("on");
         }, C.IDLE_MS || 60000);
       }
@@ -1855,6 +1865,7 @@
         "touchstart",
         "pointerdown",
       ].forEach((t) => addEventListener(t, resetIdle, { passive: true }));
+      SC.addEventListener("scroll", resetIdle, { passive: true });
       resetIdle();
 
       // 영상은 보일 때만 재생
@@ -2149,7 +2160,7 @@
       // 지금 발화를 그리는 동안 다음 발화를 미리 받아 둔다
       async function session(opening) {
         const deadline = Date.now() + C.SESSION_MAX_MS;
-        scrollTo({ top: 0, behavior: "smooth" });
+        SC.scrollTo({ top: 0, behavior: "smooth" });
         $("qr").classList.add("hidden");
         status("");
         const history = [["Human", opening]];
