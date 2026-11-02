@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Glimpse</title>
     <style>
       :root {
@@ -36,7 +36,7 @@
       /* --- 고정 UI --- */
       #title {
         position: fixed;
-        top: 20px;
+        top: calc(20px + env(safe-area-inset-top));
         left: 50%;
         transform: translateX(-50%);
         z-index: 5;
@@ -47,7 +47,7 @@
       }
       #lang {
         position: fixed;
-        top: 20px;
+        top: calc(20px + env(safe-area-inset-top));
         right: 16px;
         z-index: 5;
         display: flex;
@@ -250,17 +250,17 @@
       /* --- 폰 입력 팝업: 설명 화면 위, 위아래로 흐려지는 흰 띠 가운데에 입력창 --- */
       #ask {
         position: fixed;
-        inset: 0;
+        inset: -400px 0;
         z-index: 30;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0 16px;
+        padding: 400px 16px;
         background: linear-gradient(
-          rgba(255, 255, 255, 0),
-          #fff 30%,
-          #fff 70%,
-          rgba(255, 255, 255, 0)
+          rgba(255, 255, 255, 0) 400px,
+          #fff calc(400px + 30vh),
+          #fff calc(400px + 70vh),
+          rgba(255, 255, 255, 0) calc(400px + 100vh)
         );
         transition: opacity 1s ease;
       }
@@ -316,7 +316,7 @@
       #ask-open {
         display: none;
         position: fixed;
-        top: 20px;
+        top: calc(20px + env(safe-area-inset-top));
         left: 16px;
         z-index: 5;
       }
@@ -344,24 +344,24 @@
         }
         /* 위에 고정된 제목·언어 버튼 뒤로 글이 지나가도 겹쳐 보이지 않게 */
         /* iOS Safari는 상태바·주소창 밑으로도 글을 비쳐 보이게 그린다.
-           흰 막을 화면 밖까지 120px 늘려 그 틈까지 덮는다 */
+           화면 전체를 쓰고(viewport-fit=cover), 흰 막을 화면 밖까지 400px 늘려 그 틈까지 덮는다 */
         body::before {
           content: "";
           position: fixed;
-          top: -120px;
+          top: -400px;
           left: 0;
           right: 0;
-          height: calc(184px + env(safe-area-inset-top));
+          height: calc(464px + env(safe-area-inset-top));
           z-index: 4;
           background: linear-gradient(
-            #fff calc(155px + env(safe-area-inset-top)),
+            #fff calc(435px + env(safe-area-inset-top)),
             rgba(255, 255, 255, 0)
           );
           pointer-events: none;
         }
         main,
         body.read main {
-          padding: 96px 0 120px;
+          padding: calc(96px + env(safe-area-inset-top)) 0 120px;
         }
         section {
           margin-bottom: 120px;
@@ -397,13 +397,13 @@
         }
         /* 오른쪽 목차 대신, 아래쪽에 지금 섹션 이름만. 누르면 전체 목록이 펼쳐진다 */
         #index {
-          inset: auto 0 -120px 0;
+          inset: auto 0 -400px 0;
           width: auto;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 6px;
-          padding: 28px 16px calc(134px + env(safe-area-inset-bottom));
+          padding: 28px 16px calc(414px + env(safe-area-inset-bottom));
           background: linear-gradient(rgba(255, 255, 255, 0), #fff 28px);
         }
         #index .txt {
