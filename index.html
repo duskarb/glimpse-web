@@ -247,6 +247,75 @@
       a {
         color: inherit;
       }
+      /* --- 폰 입력 팝업: 설명 화면 위, 위아래로 흐려지는 흰 띠 가운데에 입력창 --- */
+      #ask {
+        position: fixed;
+        inset: 0;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 16px;
+        background: linear-gradient(
+          rgba(255, 255, 255, 0),
+          #fff 30%,
+          #fff 70%,
+          rgba(255, 255, 255, 0)
+        );
+        transition: opacity 1s ease;
+      }
+      #ask[hidden] {
+        display: none;
+      }
+      #ask.gone {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #ask form {
+        width: 100%;
+        max-width: 480px;
+      }
+      #ask textarea {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        height: 120px;
+        font: inherit;
+        font-size: 16px;
+        border: 1px solid #000;
+        border-radius: 0;
+        padding: 10px;
+        resize: none;
+        background: #fff;
+      }
+      #ask button {
+        display: block;
+        width: 100%;
+        margin-top: 12px;
+        font: inherit;
+        font-size: 16px;
+        padding: 12px;
+        background: #000;
+        color: #fff;
+        border: 0;
+        border-radius: 0;
+      }
+      #ask button:disabled {
+        opacity: 0.4;
+      }
+      #ask p {
+        font-size: 14px;
+        text-align: center;
+        min-height: 1.4em;
+        margin: 12px 0 0;
+      }
+      body.asking {
+        overflow: hidden;
+      }
+      body.asking #index {
+        display: none;
+      }
+
       /* --- 읽기 전용 화면(?read): QR과 세션 종이 없이 설명부터 --- */
       body.read #hero,
       body.read #paper,
@@ -357,6 +426,15 @@
 
     <div id="paper"></div>
     <div id="veil"></div>
+    <div id="ask" hidden>
+      <form id="ask-f">
+        <textarea id="ask-t" required></textarea>
+        <button id="ask-b">
+          <span class="en">send</span><span class="ko">보내기</span>
+        </button>
+        <p id="ask-msg"></p>
+      </form>
+    </div>
 
     <div id="hero">
       <div id="qr"></div>
@@ -1591,6 +1669,8 @@
       // ?read: 폰에서 문장을 보낸 뒤 여는 읽기 전용 화면. QR·세션 없이 설명만 보여준다
       const READ = new URLSearchParams(location.search).has("read");
       if (READ) document.body.classList.add("read");
+      // QR로 들어오면 주소 끝(#방)에 전시 화면의 방이 붙어 온다. 그때만 입력 팝업을 띄운다
+      const ASK_ROOM = READ ? location.hash.slice(1) : "";
       const NARROW = matchMedia("(max-width: 800px)");
 
       // --- 한/영 ---
@@ -1602,6 +1682,8 @@
         try {
           localStorage.setItem("glimpse_lang", l);
         } catch (_) {}
+        $("ask-t").placeholder =
+          l === "ko" ? "문장 하나를 써 주세요." : "Write one sentence.";
         updateNow();
       }
       document
@@ -1810,6 +1892,43 @@
         };
       }
       if (!READ) listen();
+
+      // --- 폰 입력 팝업: 보내면 스르륵 사라지고 뒤의 설명이 드러난다 ---
+      if (ASK_ROOM) {
+        const ask = $("ask"),
+          t = $("ask-t"),
+          b = $("ask-b"),
+          msg = $("ask-msg");
+        const ko = () => document.documentElement.lang === "ko";
+        t.maxLength = C.MAX_INPUT;
+        ask.hidden = false;
+        document.body.classList.add("asking");
+        $("ask-f").onsubmit = async (e) => {
+          e.preventDefault();
+          const text = t.value.replace(/\s+/g, " ").trim();
+          if (!text) return;
+          b.disabled = true;
+          try {
+            const res = await fetch(`${C.RELAY}/glimpse-${ASK_ROOM}`, {
+              method: "POST",
+              body: text,
+            });
+            if (!res.ok) throw new Error(res.status);
+            t.blur();
+            msg.textContent = ko() ? "보냈어요. 화면을 보세요." : "Sent. Look at the screen.";
+            await sleep(700);
+            ask.classList.add("gone");
+            document.body.classList.remove("asking");
+            await sleep(1000);
+            ask.hidden = true;
+          } catch (_) {
+            msg.textContent = ko()
+              ? "보내지 못했어요. 다시 시도해 주세요."
+              : "Could not send. Try again.";
+            b.disabled = false;
+          }
+        };
+      }
 
       // --- Gemini: 화자마다 자기 키, 자기 모델 ---
       async function gemini(sp, prompt) {
