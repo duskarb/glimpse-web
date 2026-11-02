@@ -1862,10 +1862,13 @@
           params.delete("key" + s.toUpperCase());
         }
       }
+      // 키는 주소에서 지운다. 폰의 #방은 남겨 둬야 새로고침해도 문장 보내기가 유지된다
       history.replaceState(
         null,
         "",
-        location.pathname + (params.toString() ? "?" + params : ""),
+        location.pathname +
+          (params.toString() ? "?" + params : "") +
+          (ASK_ROOM ? "#" + ASK_ROOM : ""),
       );
       const SPEAKERS = {};
       for (const s of ["A", "B"])
