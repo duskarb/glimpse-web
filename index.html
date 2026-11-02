@@ -332,13 +332,20 @@
           line-height: 1.6;
         }
         /* 위에 고정된 제목·언어 버튼 뒤로 글이 지나가도 겹쳐 보이지 않게 */
+        /* iOS Safari는 상태바·주소창 밑으로도 글을 비쳐 보이게 그린다.
+           흰 막을 화면 밖까지 120px 늘려 그 틈까지 덮는다 */
         body::before {
           content: "";
           position: fixed;
-          inset: 0 0 auto 0;
-          height: 64px;
+          top: -120px;
+          left: 0;
+          right: 0;
+          height: calc(184px + env(safe-area-inset-top));
           z-index: 4;
-          background: linear-gradient(#fff 55%, rgba(255, 255, 255, 0));
+          background: linear-gradient(
+            #fff calc(155px + env(safe-area-inset-top)),
+            rgba(255, 255, 255, 0)
+          );
           pointer-events: none;
         }
         main,
@@ -379,14 +386,14 @@
         }
         /* 오른쪽 목차 대신, 아래쪽에 지금 섹션 이름만. 누르면 전체 목록이 펼쳐진다 */
         #index {
-          inset: auto 0 0 0;
+          inset: auto 0 -120px 0;
           width: auto;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 6px;
-          padding: 28px 16px calc(14px + env(safe-area-inset-bottom));
-          background: linear-gradient(rgba(255, 255, 255, 0), #fff 40%);
+          padding: 28px 16px calc(134px + env(safe-area-inset-bottom));
+          background: linear-gradient(rgba(255, 255, 255, 0), #fff 28px);
         }
         #index .txt {
           position: static;
@@ -1820,7 +1827,10 @@
       setLang(saved || (navigator.language.startsWith("ko") ? "ko" : "en"));
       onScroll();
       // 이미지가 늦게 불러와져 문서 길이가 바뀌면 이름 위치도 다시 잡는다
-      new ResizeObserver(placeLabels).observe(document.querySelector("main"));
+      new ResizeObserver(() => {
+        placeLabels();
+        onScroll();
+      }).observe(document.querySelector("main"));
 
       // --- API 키: 기본은 Cloudflare Worker(C.PROXY)가 들고 있어 이 화면엔 키가 없다.
       // setup.html 이나 ?keyA=...&keyB=... 로 이 브라우저에 키를 넣으면 그 화자는 Worker 없이 직접 부른다 ---
