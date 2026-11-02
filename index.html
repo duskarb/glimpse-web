@@ -442,6 +442,13 @@
         <p id="ask-msg"></p>
       </form>
     </div>
+    <script>
+      // QR로 들어온 폰(?read#방)에는 아래 스크립트를 기다리지 않고 첫 화면부터 입력창을 띄운다
+      if (/[?&]read\b/.test(location.search) && location.hash.length > 1) {
+        document.getElementById("ask").hidden = false;
+        document.body.classList.add("read", "scrolled", "asking");
+      }
+    </script>
 
     <div id="hero">
       <div id="qr"></div>
@@ -1664,7 +1671,6 @@
       </section>
     </main>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="config.js?v=6"></script>
     <script>
       const C = window.GLIMPSE;
@@ -1868,19 +1874,28 @@
       const topic = "glimpse-" + room;
 
       // --- QR ---
-      const inputUrl = new URL("input.html", location.href);
-      inputUrl.search = "";
+      // 폰은 설명 화면(?read)으로 바로 들어가고, #방이 있으면 입력 팝업이 뜬다.
+      // 예전에 찍힌 input.html#방 주소도 input.html이 여기로 넘겨준다
+      const inputUrl = new URL("index.html", location.href);
+      inputUrl.search = "?read";
       inputUrl.hash = room;
+      // QR 라이브러리는 전시 화면에서만 불러온다. 폰은 기다릴 필요가 없다
       if (!READ) {
-        new QRCode($("qr"), {
-          text: inputUrl.href,
-          width: 240,
-          height: 240,
-          colorDark: "#000",
-          colorLight: "#fff",
-          correctLevel: QRCode.CorrectLevel.M,
-        });
-        $("qr").title = inputUrl.href;
+        const lib = document.createElement("script");
+        lib.src =
+          "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+        lib.onload = () => {
+          new QRCode($("qr"), {
+            text: inputUrl.href,
+            width: 240,
+            height: 240,
+            colorDark: "#000",
+            colorLight: "#fff",
+            correctLevel: QRCode.CorrectLevel.M,
+          });
+          $("qr").title = inputUrl.href;
+        };
+        document.head.appendChild(lib);
       }
 
       // --- 폰 입력 수신 (ntfy SSE) ---
