@@ -6,33 +6,49 @@
 <title>Glimpse</title>
 <style>
   html, body { margin: 0; background: #fff; color: #000;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-  main { max-width: 480px; margin: 0 auto; padding: 24px 16px; }
+    font-family: Arial, Helvetica, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+  main { max-width: 480px; margin: 0 auto; padding: 24px 16px calc(24px + env(safe-area-inset-bottom)); }
   h1 { font-size: 18px; font-weight: normal; text-align: center; letter-spacing: .04em; margin: 0 0 48px; }
   textarea { width: 100%; box-sizing: border-box; height: 120px; font: inherit; font-size: 16px;
     border: 1px solid #000; border-radius: 0; padding: 10px; resize: none; }
-  button { margin-top: 12px; width: 100%; font: inherit; font-size: 16px; padding: 12px;
-    background: #000; color: #fff; border: 0; border-radius: 0; }
+  button, .info { display: block; box-sizing: border-box; margin-top: 12px; width: 100%; font: inherit;
+    font-size: 16px; padding: 12px; text-align: center; border-radius: 0; }
+  button { background: #000; color: #fff; border: 0; }
   button:disabled { opacity: .4; }
-  p { font-size: 14px; text-align: center; min-height: 1.4em; }
+  .info { border: 1px solid #000; color: #000; text-decoration: none; }
+  p { font-size: 14px; text-align: center; min-height: 1.4em; line-height: 1.5; }
 </style>
 </head>
 <body>
 <main>
   <h1>glimpse</h1>
   <form id="f">
-    <textarea id="t" placeholder="Write one sentence." required></textarea>
-    <button id="b">send</button>
+    <textarea id="t" required></textarea>
+    <button id="b"></button>
   </form>
   <p id="msg"></p>
+  <!-- 문장을 보낸 뒤 폰에서 바로 작업 설명을 읽을 수 있게 -->
+  <a class="info" id="info" href="index.html?read"></a>
 </main>
 <script src="config.js?v=6"></script>
 <script>
 const C = window.GLIMPSE;
+const KO = navigator.language.startsWith('ko');
+const T = KO ? {
+  placeholder: '문장 하나를 써 주세요.', send: '보내기', scan: '화면의 QR 코드를 찍어 주세요.',
+  sent: '보냈어요. 화면을 보세요.', fail: '보내지 못했어요. 다시 시도해 주세요.', info: '작업 설명 보기',
+} : {
+  placeholder: 'Write one sentence.', send: 'send', scan: 'Scan the QR code on the screen.',
+  sent: 'Sent. Look at the screen.', fail: 'Could not send. Try again.', info: 'About this work',
+};
+document.documentElement.lang = KO ? 'ko' : 'en';
 const room = location.hash.slice(1);
 const t = document.getElementById('t'), b = document.getElementById('b'), msg = document.getElementById('msg');
+t.placeholder = T.placeholder;
+b.textContent = T.send;
+document.getElementById('info').textContent = T.info;
 t.maxLength = C.MAX_INPUT;
-if (!room) { b.disabled = true; msg.textContent = 'Scan the QR code on the screen.'; }
+if (!room) { b.disabled = true; msg.textContent = T.scan; }
 
 document.getElementById('f').onsubmit = async e => {
   e.preventDefault();
@@ -43,9 +59,9 @@ document.getElementById('f').onsubmit = async e => {
     const res = await fetch(`${C.RELAY}/glimpse-${room}`, { method: 'POST', body: text });
     if (!res.ok) throw new Error(res.status);
     t.value = '';
-    msg.textContent = 'Sent. Look at the screen.';
+    msg.textContent = T.sent;
   } catch (_) {
-    msg.textContent = 'Could not send. Try again.';
+    msg.textContent = T.fail;
   }
   setTimeout(() => { b.disabled = false; }, 3000);
 };

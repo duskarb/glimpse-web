@@ -247,24 +247,101 @@
       a {
         color: inherit;
       }
+      /* --- 읽기 전용 화면(?read): QR과 세션 종이 없이 설명부터 --- */
+      body.read #hero,
+      body.read #paper,
+      body.read #info-btn {
+        display: none;
+      }
+      body.read main {
+        padding-top: 120px;
+      }
+
       @media (max-width: 800px) {
         body {
           font-size: 17px;
+          line-height: 1.6;
         }
-        main {
-          padding-top: 120px;
+        /* 위에 고정된 제목·언어 버튼 뒤로 글이 지나가도 겹쳐 보이지 않게 */
+        body::before {
+          content: "";
+          position: fixed;
+          inset: 0 0 auto 0;
+          height: 64px;
+          z-index: 4;
+          background: linear-gradient(#fff 55%, rgba(255, 255, 255, 0));
+          pointer-events: none;
+        }
+        main,
+        body.read main {
+          padding: 96px 0 120px;
         }
         section {
-          margin-bottom: 160px;
+          margin-bottom: 120px;
+        }
+        h2 {
+          margin-bottom: 24px;
+        }
+        .text p {
+          margin-bottom: 20px;
+        }
+        .text p.src {
+          margin: -14px 0 36px;
         }
         figure {
-          margin-top: 120px;
+          margin-top: 64px;
+        }
+        figure + figure {
+          margin-top: 24px;
         }
         figure + .text {
-          margin-top: 120px;
+          margin-top: 64px;
         }
         figure.pair {
           grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        figure.pair img {
+          aspect-ratio: auto;
+        }
+        figcaption {
+          font-size: 14px;
+          line-height: 1.5;
+        }
+        /* 오른쪽 목차 대신, 아래쪽에 지금 섹션 이름만. 누르면 전체 목록이 펼쳐진다 */
+        #index {
+          inset: auto 0 0 0;
+          width: auto;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          padding: 28px 16px calc(14px + env(safe-area-inset-bottom));
+          background: linear-gradient(rgba(255, 255, 255, 0), #fff 40%);
+        }
+        #index .txt {
+          position: static;
+          transform: none !important;
+          opacity: 1 !important;
+          display: none;
+          font-size: 14px;
+          padding: 4px 0;
+          color: #888;
+        }
+        #index .txt.on {
+          display: block;
+          color: #000;
+        }
+        body.index-open #index {
+          background: #fff;
+          box-shadow: 0 -1px 0 #eee;
+          padding-top: 16px;
+        }
+        body.index-open #index .txt {
+          display: block;
+        }
+        #status {
+          font-size: 10px;
         }
       }
     </style>
@@ -1511,6 +1588,10 @@
       const status = (t) => {
         $("status").textContent = t || "";
       };
+      // ?read: 폰에서 문장을 보낸 뒤 여는 읽기 전용 화면. QR·세션 없이 설명만 보여준다
+      const READ = new URLSearchParams(location.search).has("read");
+      if (READ) document.body.classList.add("read");
+      const NARROW = matchMedia("(max-width: 800px)");
 
       // --- 한/영 ---
       function setLang(l) {
@@ -1527,14 +1608,40 @@
         .querySelectorAll("#lang .txt")
         .forEach((b) => (b.onclick = () => setLang(b.dataset.l)));
 
+      // 섹션으로 부드럽게 이동. 가는 도중 이미지가 불러와져 길이가 바뀌면, 멈춘 뒤 한 번 더 맞춘다
+      async function goTo(s) {
+        s.scrollIntoView({ behavior: "smooth" });
+        let last = -1;
+        while (Math.abs(scrollY - last) > 1) {
+          last = scrollY;
+          await sleep(200);
+        }
+        if (Math.abs(s.getBoundingClientRect().top) > 4)
+          s.scrollIntoView({ behavior: "instant" });
+        onScroll();
+      }
+
       // --- 스크롤바 자리: 섹션 이름들을 문서 속 위치에 맞춰 오른쪽 끝에 늘어놓는다 ---
       const sections = [...document.querySelectorAll("main section")];
       const labels = sections.map((s) => {
         const b = document.createElement("button");
         b.className = "txt";
-        b.onclick = () => s.scrollIntoView({ behavior: "smooth" });
+        b.onclick = () => {
+          // 좁은 화면에서는 아래쪽에 지금 섹션 이름만 보이고, 누르면 목록이 펼쳐진다
+          const open = document.body.classList.contains("index-open");
+          if (NARROW.matches && !open) {
+            document.body.classList.add("index-open");
+            return;
+          }
+          document.body.classList.remove("index-open");
+          goTo(s);
+        };
         $("index").appendChild(b);
         return b;
+      });
+      document.addEventListener("click", (e) => {
+        if (!$("index").contains(e.target))
+          document.body.classList.remove("index-open");
       });
       const NO_HOVER = matchMedia("(hover: none)").matches;
       let current = null;
@@ -1566,7 +1673,10 @@
         });
       }
       function onScroll() {
-        document.body.classList.toggle("scrolled", scrollY > innerHeight * 0.5);
+        document.body.classList.toggle(
+          "scrolled",
+          READ || scrollY > innerHeight * 0.5,
+        );
         current = sections[0];
         for (const s of sections)
           if (s.getBoundingClientRect().top < innerHeight * 0.5) current = s;
@@ -1592,6 +1702,7 @@
       // --- 설명을 보다가 한동안 입력이 없으면 QR 화면으로 돌아간다 ---
       let idleTimer = 0;
       function resetIdle() {
+        if (READ) return;
         clearTimeout(idleTimer);
         idleTimer = setTimeout(async () => {
           if (scrollY === 0) return;
@@ -1668,15 +1779,17 @@
       const inputUrl = new URL("input.html", location.href);
       inputUrl.search = "";
       inputUrl.hash = room;
-      new QRCode($("qr"), {
-        text: inputUrl.href,
-        width: 240,
-        height: 240,
-        colorDark: "#000",
-        colorLight: "#fff",
-        correctLevel: QRCode.CorrectLevel.M,
-      });
-      $("qr").title = inputUrl.href;
+      if (!READ) {
+        new QRCode($("qr"), {
+          text: inputUrl.href,
+          width: 240,
+          height: 240,
+          colorDark: "#000",
+          colorLight: "#fff",
+          correctLevel: QRCode.CorrectLevel.M,
+        });
+        $("qr").title = inputUrl.href;
+      }
 
       // --- 폰 입력 수신 (ntfy SSE) ---
       const queue = [];
@@ -1696,7 +1809,7 @@
           } catch (_) {}
         };
       }
-      listen();
+      if (!READ) listen();
 
       // --- Gemini: 화자마다 자기 키, 자기 모델 ---
       async function gemini(sp, prompt) {
