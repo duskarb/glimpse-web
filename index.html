@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#ffffff" />
     <title>Glimpse</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
     <style>
       :root {
         --green: #2f9a62;
@@ -32,14 +33,64 @@
         display: none;
       }
       body {
-        font-family:
-          Arial, Helvetica, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+        font-family: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", sans-serif;
         font-size: 19px;
         line-height: 1.45;
+      }
+      button,
+      textarea,
+      input {
+        font-family: inherit;
       }
       html[lang="ko"] .en,
       html[lang="en"] .ko {
         display: none !important;
+      }
+
+      /* --- 본문이 화면에 들어올 때 QR처럼 출렁이며 올라온다 --- */
+      .rise {
+        opacity: 0;
+        transform-origin: 50% 100%;
+      }
+      .rise.in {
+        animation: boing 0.95s both;
+        animation-delay: var(--d, 0s);
+      }
+      @keyframes boing {
+        0% {
+          opacity: 0;
+          transform: translateY(48px) skewY(2.4deg) scaleY(1.06);
+          animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+        }
+        34% {
+          opacity: 1;
+          transform: translateY(-9px) skewY(-1.1deg) scaleY(0.97);
+          animation-timing-function: ease-in-out;
+        }
+        54% {
+          transform: translateY(4px) skewY(0.5deg) scaleY(1.015);
+          animation-timing-function: ease-in-out;
+        }
+        72% {
+          transform: translateY(-1.6px) skewY(-0.2deg) scaleY(0.995);
+          animation-timing-function: ease-in-out;
+        }
+        87% {
+          transform: translateY(0.5px) skewY(0.06deg);
+          animation-timing-function: ease-in-out;
+        }
+        100% {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .rise {
+          opacity: 1;
+        }
+        .rise.in {
+          animation: none;
+        }
       }
 
       /* --- 고정 UI --- */
@@ -152,7 +203,6 @@
       }
       .line {
         position: absolute;
-        font-family: "Courier New", Courier, monospace;
         font-size: 15px;
         line-height: 1.35;
       }
@@ -1875,6 +1925,31 @@
         ),
       );
       document.querySelectorAll("video").forEach((v) => vio.observe(v));
+
+      // 제목·문단·그림이 아래에서 들어올 때마다 출렁이며 올라온다.
+      // 한 번에 여럿이 들어오면 조금씩 늦춰 차례로, 아래로 빠져나가면 다시 숨겨 둔다
+      const rio = new IntersectionObserver(
+        (es) => {
+          let i = 0;
+          for (const e of es) {
+            const el = e.target;
+            if (e.isIntersecting) {
+              if (el.classList.contains("in")) continue;
+              el.style.setProperty("--d", Math.min(i++, 5) * 0.07 + "s");
+              el.classList.add("in");
+            } else if (e.boundingClientRect.top > e.rootBounds.bottom) {
+              el.classList.remove("in");
+            }
+          }
+        },
+        { rootMargin: "0px 0px -40px 0px" },
+      );
+      document
+        .querySelectorAll("main h2, main .text > *, main figure")
+        .forEach((el) => {
+          el.classList.add("rise");
+          rio.observe(el);
+        });
 
       let saved = null;
       try {
