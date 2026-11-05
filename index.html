@@ -7,6 +7,19 @@
     <title>Glimpse</title>
     <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+    <script>
+      // 리소 인쇄판(#1): 전시 화면은 index.html#1, 폰은 QR에 붙은 ?v=1 로 들어온다.
+      // 첫 화면부터 색이 맞도록 스타일보다 먼저 정하고, 이 판에만 쓰는 글꼴을 불러온다
+      if (location.hash === "#1" || /[?&]v=1\b/.test(location.search)) {
+        document.documentElement.classList.add("riso");
+        document.write(
+          '<link rel="preconnect" href="https://fonts.googleapis.com" />' +
+            '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />' +
+            '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=BioRhyme:wght@800&display=swap" />',
+        );
+        document.querySelector('meta[name="theme-color"]').content = "#f7f4ec";
+      }
+    </script>
     <style>
       :root {
         --green: #2f9a62;
@@ -520,9 +533,274 @@
           font-size: 10px;
         }
       }
+
+      /* ================= 리소 인쇄판(#1) =================
+         책자(Glimpse / C-KO+)와 같은 두 잉크: 초록 #20874d × 보라 #8140b5, 글은 짙은 보라 #63298a.
+         종이는 살짝 누런 미색에 잉크 입자를 얹고, 사진은 한 가지 잉크로만 찍은 것처럼 바꾼다 */
+      html.riso {
+        --paper: #f7f4ec;
+        --ink: #63298a;
+        --ink-g: #20874d;
+        --ink-p: #8140b5;
+        --green: #20874d;
+        --purple: #8140b5;
+      }
+      html.riso,
+      html.riso body {
+        background: var(--paper);
+        color: var(--ink);
+      }
+      /* 종이 위 잉크 입자: 화면 전체에 아주 옅게 곱하기로 얹는다 */
+      html.riso body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        pointer-events: none;
+        opacity: 0.28;
+        mix-blend-mode: multiply;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.39 0 0 0 0 0.16 0 0 0 0 0.54 0 0 0 1.6 -0.62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+      html.riso .txt,
+      html.riso #lang .txt.on,
+      html.riso figcaption {
+        color: var(--ink);
+      }
+      html.riso #lang .txt {
+        color: var(--ink-g);
+        opacity: 0.7;
+      }
+      html.riso #lang .txt.on {
+        opacity: 1;
+      }
+      html.riso #status {
+        color: var(--ink-g);
+      }
+      html.riso #veil {
+        background: var(--paper);
+      }
+      html.riso .line {
+        mix-blend-mode: multiply;
+      }
+
+      /* 제목: BioRhyme 굵게, 왼쪽 맞춤. 장 번호는 초록 잉크로 크게 깔고 그 위에 보라 글자가 겹친다 */
+      html.riso h2 {
+        position: relative;
+        isolation: isolate;
+        text-transform: none;
+        text-align: left;
+        font-family: "BioRhyme", "Pretendard Variable", Pretendard, serif;
+        font-weight: 800;
+        font-size: 30px;
+        line-height: 1.12;
+        letter-spacing: -0.06em;
+        color: var(--ink);
+        margin-bottom: 36px;
+      }
+      /* 책자 한글판처럼 제목은 한글 화면에서도 영문으로 둔다 */
+      html.riso[lang="ko"] h2 .en {
+        display: inline !important;
+      }
+      html.riso h2 .ko {
+        display: none !important;
+      }
+      html.riso h2 > span:not(.num) {
+        position: relative;
+        mix-blend-mode: multiply;
+      }
+      html.riso h2 .num {
+        position: absolute;
+        z-index: -1;
+        left: 4px;
+        top: 50%;
+        font-family: "Alfa Slab One", serif;
+        font-weight: 400;
+        font-size: 104px;
+        line-height: 1;
+        letter-spacing: 0;
+        color: var(--ink-g);
+        transform: translateY(-52%) scaleX(0.46);
+        transform-origin: 0 50%;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+      html.riso h2.has-num {
+        padding-left: 46px;
+      }
+      html.riso .text p.src {
+        color: var(--ink-g);
+        font-size: 12px;
+      }
+
+      /* 사진: 흑백으로 바꾼 뒤 한 가지 잉크로만 찍는다(검정 → 잉크, 흰색 → 종이) */
+      html.riso figure img,
+      html.riso figure video {
+        filter: grayscale(1) contrast(1.12) url(#ink-g);
+      }
+      html.riso section:nth-of-type(3n) figure img,
+      html.riso section:nth-of-type(3n) figure video {
+        filter: grayscale(1) contrast(1.12) url(#ink-p);
+      }
+
+      /* 마지막 장: 책자 뒤표지처럼 보라 잉크를 통째로 깔고 글은 종이색으로 */
+      html.riso main section:last-of-type {
+        background: var(--ink);
+        color: var(--paper);
+        padding: 120px 0 140px;
+        margin-bottom: 0;
+      }
+      html.riso main section:last-of-type h2,
+      html.riso main section:last-of-type p.src,
+      html.riso main section:last-of-type a {
+        color: var(--paper);
+      }
+      html.riso main section:last-of-type h2 > span {
+        mix-blend-mode: normal;
+      }
+      html.riso main:has(section:last-of-type) {
+        padding-bottom: 0;
+      }
+
+      /* 폰 입력 팝업 */
+      html.riso #ask {
+        background: linear-gradient(
+          rgba(247, 244, 236, 0),
+          var(--paper) 30%,
+          var(--paper) 70%,
+          rgba(247, 244, 236, 0)
+        );
+      }
+      html.riso #ask textarea {
+        background: var(--paper);
+        border-color: var(--ink);
+        color: var(--ink);
+      }
+      html.riso #ask button {
+        background: var(--ink);
+        color: var(--paper);
+      }
+
+      /* --- 움직임: 두 번 찍는 리소처럼, 초록 판이 어긋나 있다가 보라 판에 맞물리며 들어온다 --- */
+      html.riso .rise.in {
+        animation-name: ink;
+        animation-duration: 0.9s;
+        animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+      }
+      @keyframes ink {
+        0% {
+          opacity: 0;
+          transform: translateY(calc(var(--dir, 1) * 18px));
+          text-shadow: -9px calc(var(--dir, 1) * 7px) 0 rgba(32, 135, 77, 0.75);
+        }
+        55% {
+          opacity: 1;
+          transform: none;
+          text-shadow: 2px calc(var(--dir, 1) * -1px) 0 rgba(32, 135, 77, 0.45);
+        }
+        100% {
+          opacity: 1;
+          transform: none;
+          text-shadow: 0 0 0 rgba(32, 135, 77, 0);
+        }
+      }
+      /* 장 번호는 초록 판: 조금 늦게, 옆으로 밀려 있다가 제자리에 찍힌다 */
+      html.riso h2.rise.in .num {
+        animation: num-in 1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+        animation-delay: calc(var(--d, 0s) + 0.12s);
+      }
+      @keyframes num-in {
+        0% {
+          opacity: 0;
+          transform: translate(-22px, calc(-52% + var(--dir, 1) * 10px)) scaleX(0.46);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(-52%) scaleX(0.46);
+        }
+      }
+      /* 사진은 종이가 드럼을 지나가듯 위에서부터(올릴 땐 아래에서부터) 찍혀 나온다 */
+      html.riso figure .rise.in {
+        animation-name: feed;
+        animation-duration: 1.1s;
+        animation-timing-function: cubic-bezier(0.3, 0.6, 0.2, 1);
+      }
+      @keyframes feed {
+        0% {
+          opacity: 1;
+          clip-path: inset(
+            calc((1 - var(--dir, 1)) * 50%) 0 calc((1 + var(--dir, 1)) * 50%) 0
+          );
+          transform: translateY(calc(var(--dir, 1) * 10px));
+        }
+        100% {
+          opacity: 1;
+          clip-path: inset(0 0 0 0);
+          transform: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html.riso .rise.in,
+        html.riso h2.rise.in .num {
+          animation: none;
+        }
+      }
+      @media (max-width: 800px) {
+        html.riso #topfade {
+          background-color: var(--paper);
+        }
+        html.riso #topfade::after {
+          background: linear-gradient(var(--paper), rgba(247, 244, 236, 0));
+        }
+        html.riso #index {
+          background-color: var(--paper);
+        }
+        html.riso #index::before {
+          background: linear-gradient(rgba(247, 244, 236, 0), var(--paper));
+        }
+        html.riso #index .txt {
+          color: var(--ink-g);
+        }
+        html.riso #index .txt.on {
+          color: var(--ink);
+        }
+        html.riso body.index-open #index {
+          background: var(--paper);
+          box-shadow: 0 -1px 0 rgba(99, 41, 138, 0.2);
+        }
+        html.riso h2 {
+          font-size: 26px;
+        }
+        html.riso h2 .num {
+          font-size: 88px;
+        }
+        html.riso h2.has-num {
+          padding-left: 40px;
+        }
+      }
     </style>
   </head>
   <body>
+    <!-- 리소 인쇄판(#1)의 한 가지 잉크 사진: 밝기만 남겨 검정은 잉크, 흰색은 종이 색으로 -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <filter id="ink-g" color-interpolation-filters="sRGB">
+        <feColorMatrix
+          type="matrix"
+          values="0.1793 0.6030 0.0609 0 0.1255
+                  0.0909 0.3057 0.0309 0 0.5294
+                  0.1326 0.4459 0.0450 0 0.3020
+                  0 0 0 1 0"
+        />
+      </filter>
+      <filter id="ink-p" color-interpolation-filters="sRGB">
+        <feColorMatrix
+          type="matrix"
+          values="0.0984 0.3310 0.0334 0 0.5059
+                  0.1501 0.5048 0.0510 0 0.2510
+                  0.0459 0.1543 0.0156 0 0.7098
+                  0 0 0 1 0"
+        />
+      </filter>
+    </svg>
     <a id="title" href="#"><img src="assets/logo.svg" alt="glimpse" /></a>
     <div id="lang">
       <button class="txt" data-l="ko">한</button>
@@ -1788,6 +2066,30 @@
       // ?read: 폰에서 문장을 보낸 뒤 여는 읽기 전용 화면. QR·세션 없이 설명만 보여준다
       const READ = new URLSearchParams(location.search).has("read");
       if (READ) document.body.classList.add("read");
+      // 리소 인쇄판(#1). 기본판과 주소 끝만 다르니, 주소창에서 #1을 붙이거나 떼면 다시 연다
+      const RISO = document.documentElement.classList.contains("riso");
+      if (!READ)
+        addEventListener("hashchange", () => {
+          if ((location.hash === "#1") !== RISO) location.reload();
+        });
+      // 리소판 제목은 책자처럼 장 번호를 떼어 초록 잉크로 크게 깐다
+      if (RISO)
+        document.querySelectorAll("main h2").forEach((h) => {
+          let num = "";
+          for (const sp of h.querySelectorAll(".en, .ko")) {
+            const m = sp.textContent.match(/^\s*(\d{2})\s+/);
+            if (!m) continue;
+            num = m[1];
+            sp.textContent = sp.textContent.slice(m[0].length);
+          }
+          if (!num) return;
+          const n = document.createElement("span");
+          n.className = "num";
+          n.setAttribute("aria-hidden", "true");
+          n.textContent = num;
+          h.prepend(n);
+          h.classList.add("has-num");
+        });
       // QR로 들어오면 주소 끝(#방)에 전시 화면의 방이 붙어 온다. 그때만 입력 팝업을 띄운다
       const ASK_ROOM = READ ? location.hash.slice(1) : "";
       const NARROW = matchMedia("(max-width: 800px)");
@@ -2011,7 +2313,7 @@
         "",
         location.pathname +
           (params.toString() ? "?" + params : "") +
-          (ASK_ROOM ? "#" + ASK_ROOM : ""),
+          (ASK_ROOM ? "#" + ASK_ROOM : RISO && !READ ? "#1" : ""),
       );
       const SPEAKERS = {};
       for (const s of ["A", "B"])
@@ -2037,7 +2339,7 @@
       // 폰은 설명 화면(?read)으로 바로 들어가고, #방이 있으면 입력 팝업이 뜬다.
       // 예전에 찍힌 input.html#방 주소도 input.html이 여기로 넘겨준다
       const inputUrl = new URL("index.html", location.href);
-      inputUrl.search = "?read";
+      inputUrl.search = RISO ? "?read&v=1" : "?read";
       inputUrl.hash = room;
       // QR 라이브러리는 전시 화면에서만 불러온다. 폰은 기다릴 필요가 없다
       if (!READ) {
@@ -2143,12 +2445,12 @@
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
           ctx.clearRect(0, 0, W, W);
           // 흰 여백까지 함께 일그러뜨린다
-          ctx.fillStyle = "#fff";
+          ctx.fillStyle = RISO ? "#f7f4ec" : "#fff";
           ctx.beginPath();
           quad(P(0, 0), P(N, 0), P(N, N), P(0, N));
           ctx.fill();
           // 한 경로로 모아 한 번에 채워야 모듈 사이에 실금이 안 생긴다
-          ctx.fillStyle = "#000";
+          ctx.fillStyle = RISO ? "#63298a" : "#000";
           ctx.beginPath();
           for (const [c0, c1, r] of runs) {
             quad(P(c0, r), P(c1, r), P(c1, r + 1), P(c0, r + 1));
