@@ -687,63 +687,6 @@
         color: var(--paper);
       }
 
-      /* --- 움직임: 글은 조용히 떠오르고, 장 번호와 사진은 따로 찍혀 나온다 --- */
-      html.riso .rise.in {
-        animation-name: ink;
-        animation-duration: 0.7s;
-        animation-timing-function: linear;
-      }
-      @keyframes ink {
-        0% {
-          opacity: 0;
-          transform: translateY(calc(var(--dir, 1) * 18px));
-        }
-        100% {
-          opacity: 1;
-          transform: none;
-        }
-      }
-      /* 장 번호는 초록 판: 조금 늦게, 옆으로 밀려 있다가 제자리에 찍힌다 */
-      html.riso h2.rise.in .num {
-        animation: num-in 0.8s linear both;
-        animation-delay: calc(var(--d, 0s) + 0.12s);
-      }
-      @keyframes num-in {
-        0% {
-          opacity: 0;
-          transform: translate(-22px, calc(-52% + var(--dir, 1) * 10px)) scaleX(0.46);
-        }
-        100% {
-          opacity: 0.78;
-          transform: translateY(-52%) scaleX(0.46);
-        }
-      }
-      /* 사진은 종이가 드럼을 지나가듯 위에서부터(올릴 땐 아래에서부터) 찍혀 나온다 */
-      html.riso figure .rise.in {
-        animation-name: feed;
-        animation-duration: 1s;
-        animation-timing-function: linear;
-      }
-      @keyframes feed {
-        0% {
-          opacity: 1;
-          clip-path: inset(
-            calc((1 - var(--dir, 1)) * 50%) 0 calc((1 + var(--dir, 1)) * 50%) 0
-          );
-          transform: translateY(calc(var(--dir, 1) * 10px));
-        }
-        100% {
-          opacity: 1;
-          clip-path: inset(0 0 0 0);
-          transform: none;
-        }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        html.riso .rise.in,
-        html.riso h2.rise.in .num {
-          animation: none;
-        }
-      }
       @media (max-width: 800px) {
         html.riso #topfade {
           background-color: var(--paper);
@@ -2276,14 +2219,16 @@
         },
         { rootMargin: "-50px 0px -40px 0px" },
       );
-      document
-        .querySelectorAll(
-          "main h2, main .text > *, main figcaption, main figure img, main figure video",
-        )
-        .forEach((el) => {
-          el.classList.add("rise");
-          rio.observe(el);
-        });
+      // 리소판(#1)은 본문과 이미지가 처음부터 그대로 놓여 있다
+      if (!RISO)
+        document
+          .querySelectorAll(
+            "main h2, main .text > *, main figcaption, main figure img, main figure video",
+          )
+          .forEach((el) => {
+            el.classList.add("rise");
+            rio.observe(el);
+          });
 
       let saved = null;
       try {
@@ -2399,8 +2344,8 @@
         }));
         const K = 90;
         const D = 7;
-        // 리소판(#1)은 튕기지 않고, 플로터 펜처럼 일정한 속도로 곧장 가서 잠깐 멈춘다
-        const SPEED = R * 0.9; // 초당 이동 거리
+        // 리소판(#1)은 튕기지 않는다. 천천히 출발해 천천히 멈추고(ease-in-out), 목표를 넘지 않는다
+        const ease = (p) => (p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2);
 
         // 단위 정사각형 → 네 꼭짓점 사각형으로 보내는 원근 변환
         function homography(p) {
@@ -2428,6 +2373,31 @@
           if ($("qr").classList.contains("hidden")) return;
 
           for (const k of corners) {
+            if (RISO) {
+              // 한 번 움직이기 시작하면 도착할 때까지 목표를 바꾸지 않는다
+              if (k.t0 === undefined || t >= k.t0 + k.dur) {
+                if (k.t0 !== undefined) {
+                  k.x = k.tx;
+                  k.y = k.ty;
+                }
+                if (k.t0 === undefined || t >= k.t0 + k.dur + k.rest) {
+                  const a = Math.random() * Math.PI * 2;
+                  const m = Math.random() < 0.25 ? R * 0.2 : R * (0.4 + Math.random() * 0.6);
+                  k.fx = k.x;
+                  k.fy = k.y;
+                  k.tx = k.hx + Math.cos(a) * m;
+                  k.ty = k.hy + Math.sin(a) * m;
+                  k.t0 = t;
+                  k.dur = 1.1 + Math.random() * 1.2;
+                  k.rest = 0.2 + Math.random() * 0.8;
+                }
+                continue;
+              }
+              const p = ease((t - k.t0) / k.dur);
+              k.x = k.fx + (k.tx - k.fx) * p;
+              k.y = k.fy + (k.ty - k.fy) * p;
+              continue;
+            }
             if (t > k.next) {
               // 새 자리로 홱 당긴다. 가끔은 제자리 근처로 돌아온다
               const a = Math.random() * Math.PI * 2;
@@ -2435,19 +2405,6 @@
               k.tx = k.hx + Math.cos(a) * m;
               k.ty = k.hy + Math.sin(a) * m;
               k.next = t + 0.5 + Math.random() * 1.8;
-            }
-            if (RISO) {
-              const dx = k.tx - k.x, dy = k.ty - k.y;
-              const dist = Math.hypot(dx, dy);
-              const step = SPEED * dt;
-              if (dist <= step) {
-                k.x = k.tx;
-                k.y = k.ty;
-              } else {
-                k.x += (dx / dist) * step;
-                k.y += (dy / dist) * step;
-              }
-              continue;
             }
             k.vx += (K * (k.tx - k.x) - D * k.vx) * dt;
             k.vy += (K * (k.ty - k.y) - D * k.vy) * dt;
