@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#ffffff" />
     <title>Glimpse</title>
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
     <style>
       :root {
@@ -92,14 +93,17 @@
       /* --- 고정 UI --- */
       #title {
         position: fixed;
-        top: calc(20px + env(safe-area-inset-top));
+        top: calc(8px + env(safe-area-inset-top));
         left: 50%;
         transform: translateX(-50%);
         z-index: 5;
-        font-size: 18px;
-        letter-spacing: 0.04em;
-        color: #000;
-        text-decoration: none;
+        line-height: 0;
+      }
+      /* 로고는 위아래로 g·l·p가 길게 나와서, 소문자 몸통이 언어 버튼 높이에 오도록 둔다 */
+      #title img {
+        display: block;
+        height: 54px;
+        width: auto;
       }
       #lang {
         position: fixed;
@@ -402,6 +406,12 @@
           font-size: 17px;
           line-height: 1.6;
         }
+        #title {
+          top: calc(6px + env(safe-area-inset-top));
+        }
+        #title img {
+          height: 42px;
+        }
         /* 위에 고정된 제목·언어 버튼 뒤로 글이 지나가도 겹쳐 보이지 않게 */
         /* iOS Safari 26은 화면 밖에 놓인 요소는 그리지 않고, 위·아래 가장자리에
            닿은 고정 요소의 배경색(background-color)으로 상태바·주소창 자리를 칠한다.
@@ -412,7 +422,7 @@
           top: 0;
           left: 0;
           right: 0;
-          height: calc(44px + env(safe-area-inset-top));
+          height: calc(50px + env(safe-area-inset-top));
           z-index: 4;
           background-color: #fff;
           pointer-events: none;
@@ -512,7 +522,7 @@
     </style>
   </head>
   <body>
-    <a id="title" href="#">glimpse</a>
+    <a id="title" href="#"><img src="assets/logo.svg" alt="glimpse" /></a>
     <div id="lang">
       <button class="txt" data-l="ko">한</button>
       <button class="txt" data-l="en">EN</button>
