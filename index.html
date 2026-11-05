@@ -690,8 +690,8 @@
       /* --- 움직임: 글은 조용히 떠오르고, 장 번호와 사진은 따로 찍혀 나온다 --- */
       html.riso .rise.in {
         animation-name: ink;
-        animation-duration: 0.9s;
-        animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+        animation-duration: 0.7s;
+        animation-timing-function: linear;
       }
       @keyframes ink {
         0% {
@@ -705,7 +705,7 @@
       }
       /* 장 번호는 초록 판: 조금 늦게, 옆으로 밀려 있다가 제자리에 찍힌다 */
       html.riso h2.rise.in .num {
-        animation: num-in 1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+        animation: num-in 0.8s linear both;
         animation-delay: calc(var(--d, 0s) + 0.12s);
       }
       @keyframes num-in {
@@ -721,8 +721,8 @@
       /* 사진은 종이가 드럼을 지나가듯 위에서부터(올릴 땐 아래에서부터) 찍혀 나온다 */
       html.riso figure .rise.in {
         animation-name: feed;
-        animation-duration: 1.1s;
-        animation-timing-function: cubic-bezier(0.3, 0.6, 0.2, 1);
+        animation-duration: 1s;
+        animation-timing-function: linear;
       }
       @keyframes feed {
         0% {
@@ -2399,6 +2399,8 @@
         }));
         const K = 90;
         const D = 7;
+        // 리소판(#1)은 튕기지 않고, 플로터 펜처럼 일정한 속도로 곧장 가서 잠깐 멈춘다
+        const SPEED = R * 0.9; // 초당 이동 거리
 
         // 단위 정사각형 → 네 꼭짓점 사각형으로 보내는 원근 변환
         function homography(p) {
@@ -2433,6 +2435,19 @@
               k.tx = k.hx + Math.cos(a) * m;
               k.ty = k.hy + Math.sin(a) * m;
               k.next = t + 0.5 + Math.random() * 1.8;
+            }
+            if (RISO) {
+              const dx = k.tx - k.x, dy = k.ty - k.y;
+              const dist = Math.hypot(dx, dy);
+              const step = SPEED * dt;
+              if (dist <= step) {
+                k.x = k.tx;
+                k.y = k.ty;
+              } else {
+                k.x += (dx / dist) * step;
+                k.y += (dy / dist) * step;
+              }
+              continue;
             }
             k.vx += (K * (k.tx - k.x) - D * k.vx) * dt;
             k.vy += (K * (k.ty - k.y) - D * k.vy) * dt;
