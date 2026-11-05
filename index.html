@@ -17,8 +17,7 @@
             '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />' +
             '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=BioRhyme:wght@800&display=swap" />',
         );
-        document.querySelector('meta[name="theme-color"]').content = "#f7f4ec";
-      }
+              }
     </script>
     <style>
       :root {
@@ -536,9 +535,9 @@
 
       /* ================= 리소 인쇄판(#1) =================
          책자(Glimpse / C-KO+)와 같은 두 잉크: 초록 #20874d × 보라 #8140b5, 글은 짙은 보라 #63298a.
-         종이는 살짝 누런 미색에 잉크 입자를 얹고, 사진은 한 가지 잉크로만 찍은 것처럼 바꾼다 */
+         바탕은 흰 종이, 사진은 한 가지 잉크로만 찍은 것처럼 바꾼다 */
       html.riso {
-        --paper: #f7f4ec;
+        --paper: #fff;
         --ink: #63298a;
         --ink-g: #20874d;
         --ink-p: #8140b5;
@@ -549,17 +548,6 @@
       html.riso body {
         background: var(--paper);
         color: var(--ink);
-      }
-      /* 종이 위 잉크 입자: 화면 전체에 아주 옅게 곱하기로 얹는다 */
-      html.riso body::after {
-        content: "";
-        position: fixed;
-        inset: 0;
-        z-index: 60;
-        pointer-events: none;
-        opacity: 0.28;
-        mix-blend-mode: multiply;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.39 0 0 0 0 0.16 0 0 0 0 0.54 0 0 0 1.6 -0.62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
       }
       html.riso .txt,
       html.riso #lang .txt.on,
@@ -671,10 +659,10 @@
       /* 폰 입력 팝업 */
       html.riso #ask {
         background: linear-gradient(
-          rgba(247, 244, 236, 0),
+          rgba(255, 255, 255, 0),
           var(--paper) 30%,
           var(--paper) 70%,
-          rgba(247, 244, 236, 0)
+          rgba(255, 255, 255, 0)
         );
       }
       html.riso #ask textarea {
@@ -692,13 +680,13 @@
           background-color: var(--paper);
         }
         html.riso #topfade::after {
-          background: linear-gradient(var(--paper), rgba(247, 244, 236, 0));
+          background: linear-gradient(var(--paper), rgba(255, 255, 255, 0));
         }
         html.riso #index {
           background-color: var(--paper);
         }
         html.riso #index::before {
-          background: linear-gradient(rgba(247, 244, 236, 0), var(--paper));
+          background: linear-gradient(rgba(255, 255, 255, 0), var(--paper));
         }
         html.riso #index .txt {
           color: var(--ink-g);
@@ -723,23 +711,23 @@
     </style>
   </head>
   <body>
-    <!-- 리소 인쇄판(#1)의 한 가지 잉크 사진: 밝기만 남겨 검정은 잉크, 흰색은 종이 색으로 -->
+    <!-- 리소 인쇄판(#1)의 한 가지 잉크 사진: 밝기만 남겨 검정은 잉크, 흰색은 그대로 흰색으로 -->
     <svg width="0" height="0" style="position: absolute" aria-hidden="true">
       <filter id="ink-g" color-interpolation-filters="sRGB">
         <feColorMatrix
           type="matrix"
-          values="0.1793 0.6030 0.0609 0 0.1255
-                  0.0909 0.3057 0.0309 0 0.5294
-                  0.1326 0.4459 0.0450 0 0.3020
+          values="0.1859 0.6254 0.0631 0 0.1255
+                  0.1000 0.3366 0.0340 0 0.5294
+                  0.1484 0.4992 0.0504 0 0.3020
                   0 0 0 1 0"
         />
       </filter>
       <filter id="ink-p" color-interpolation-filters="sRGB">
         <feColorMatrix
           type="matrix"
-          values="0.0984 0.3310 0.0334 0 0.5059
-                  0.1501 0.5048 0.0510 0 0.2510
-                  0.0459 0.1543 0.0156 0 0.7098
+          values="0.1050 0.3534 0.0357 0 0.5059
+                  0.1592 0.5357 0.0541 0 0.2510
+                  0.0617 0.2075 0.0210 0 0.7098
                   0 0 0 1 0"
         />
       </filter>
@@ -2417,7 +2405,7 @@
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
           ctx.clearRect(0, 0, W, W);
           // 흰 여백까지 함께 일그러뜨린다
-          ctx.fillStyle = RISO ? "#f7f4ec" : "#fff";
+          ctx.fillStyle = "#fff";
           ctx.beginPath();
           quad(P(0, 0), P(N, 0), P(N, N), P(0, N));
           ctx.fill();
