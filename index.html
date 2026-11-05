@@ -47,16 +47,11 @@
         display: none !important;
       }
 
-      /* --- 스크롤하면 글은 줄마다, 그림은 통째로 통통 튀며 들어온다.
+      /* --- 스크롤하면 문단과 그림이 하나씩 통통 튀며 들어온다.
          내릴 땐 아래에서 올라오고, 올릴 땐 위에서 내려온다(--dir: -1) --- */
-      .w {
-        display: inline-block;
-      }
-      .w,
       .rise {
         opacity: 0;
       }
-      .w.in,
       .rise.in {
         animation: boing 0.8s both;
         animation-delay: var(--d, 0s);
@@ -86,11 +81,9 @@
         }
       }
       @media (prefers-reduced-motion: reduce) {
-        .w,
         .rise {
           opacity: 1;
         }
-        .w.in,
         .rise.in {
           animation: none;
         }
@@ -1929,31 +1922,8 @@
       );
       document.querySelectorAll("video").forEach((v) => vio.observe(v));
 
-      // 글은 낱말마다 감싸 두고 낱말 하나하나를 지켜본다. 같은 줄의 낱말은 함께 들어오니
-      // 줄 단위로 같이 튀어 들어오고, 한 번에 여러 줄이 들어오면 스크롤 방향 쪽 줄부터
+      // 제목·문단·그림을 하나씩 지켜본다. 한 번에 여럿이 들어오면 스크롤 방향 쪽부터
       // 조금씩 늦춘다. 화면 밖으로 빠져나가면 다시 숨겨 두어, 위로든 아래로든 다시 들어온다
-      function wrapWords(el) {
-        const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-        const nodes = [];
-        while (walk.nextNode()) nodes.push(walk.currentNode);
-        for (const t of nodes) {
-          const parts = t.textContent.split(/(\s+)/);
-          if (parts.length === 1 && !parts[0].trim()) continue;
-          const frag = document.createDocumentFragment();
-          for (const p of parts) {
-            if (!p) continue;
-            if (/^\s+$/.test(p)) {
-              frag.appendChild(document.createTextNode(p));
-            } else {
-              const w = document.createElement("span");
-              w.className = "w";
-              w.textContent = p;
-              frag.appendChild(w);
-            }
-          }
-          t.replaceWith(frag);
-        }
-      }
       // 지금 스크롤이 내려가는 중(1)인지 올라가는 중(-1)인지
       let scrollDir = 1;
       let lastTop = SC.scrollTop;
@@ -1976,7 +1946,7 @@
               el.classList.remove("in");
             }
           }
-          // 줄마다 순서를 매긴다 (같은 줄은 top이 거의 같다)
+          // 위치마다 순서를 매긴다 (나란히 놓인 그림은 top이 거의 같아 함께 들어온다)
           const tops = [];
           for (const e of enter) {
             const y = e.boundingClientRect.top;
@@ -1985,8 +1955,8 @@
           tops.sort((a, b) => (a - b) * scrollDir);
           for (const e of enter) {
             const y = e.boundingClientRect.top;
-            const line = tops.findIndex((t) => Math.abs(t - y) < 6);
-            e.target.style.setProperty("--d", Math.min(line, 14) * 0.05 + "s");
+            const order = tops.findIndex((t) => Math.abs(t - y) < 6);
+            e.target.style.setProperty("--d", Math.min(order, 8) * 0.07 + "s");
             e.target.style.setProperty("--dir", scrollDir);
             e.target.classList.add("in");
           }
@@ -1994,12 +1964,13 @@
         { rootMargin: "-50px 0px -40px 0px" },
       );
       document
-        .querySelectorAll("main h2, main .text > *, main figcaption")
-        .forEach(wrapWords);
-      document.querySelectorAll("main figure img, main figure video").forEach((el) => {
-        el.classList.add("rise");
-      });
-      document.querySelectorAll(".w, .rise").forEach((el) => rio.observe(el));
+        .querySelectorAll(
+          "main h2, main .text > *, main figcaption, main figure img, main figure video",
+        )
+        .forEach((el) => {
+          el.classList.add("rise");
+          rio.observe(el);
+        });
 
       let saved = null;
       try {
