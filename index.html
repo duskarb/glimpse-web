@@ -93,8 +93,9 @@
       /* --- 고정 UI --- */
       #title {
         position: fixed;
-        /* 한/EN 버튼(위 20px)의 세로 가운데에 로고 가운데를 맞춘다 */
-        top: calc(31px + env(safe-area-inset-top));
+        /* 한/EN 버튼(위 20px)의 세로 가운데보다 조금 아래에 로고 가운데를 둔다.
+           l·i의 윗부분이 높이 솟아 있어 가운데를 맞추면 오히려 떠 보인다 */
+        top: calc(37px + env(safe-area-inset-top));
         left: 50%;
         transform: translate(-50%, -50%);
         z-index: 5;
@@ -407,7 +408,7 @@
           line-height: 1.6;
         }
         #title {
-          top: calc(32px + env(safe-area-inset-top));
+          top: calc(38px + env(safe-area-inset-top));
         }
         #title img {
           height: 42px;
@@ -422,7 +423,7 @@
           top: 0;
           left: 0;
           right: 0;
-          height: calc(56px + env(safe-area-inset-top));
+          height: calc(62px + env(safe-area-inset-top));
           z-index: 4;
           background-color: #fff;
           pointer-events: none;
