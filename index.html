@@ -15,7 +15,7 @@
         document.write(
           '<link rel="preconnect" href="https://fonts.googleapis.com" />' +
             '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />' +
-            '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=BioRhyme:wght@800&display=swap" />',
+            '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=BioRhyme:wght@800&family=Gothic+A1:wght@400;700&display=swap" />',
         );
               }
     </script>
@@ -535,7 +535,7 @@
 
       /* ================= 리소 인쇄판(#1) =================
          책자(Glimpse / C-KO+)와 같은 두 잉크: 초록 #20874d × 보라 #8140b5, 글은 짙은 보라 #63298a.
-         바탕은 흰 종이, 사진은 한 가지 잉크로만 찍은 것처럼 바꾼다 */
+         바탕은 흰 종이, 사진과 영상은 원래 색 그대로 */
       html.riso {
         --paper: #fff;
         --ink: #63298a;
@@ -548,6 +548,11 @@
       html.riso body {
         background: var(--paper);
         color: var(--ink);
+      }
+      /* 본문은 책자와 같은 Gothic A1 */
+      html.riso body {
+        font-family: "Gothic A1", "Pretendard Variable", Pretendard, sans-serif;
+        letter-spacing: -0.01em;
       }
       html.riso .txt,
       html.riso #lang .txt.on,
@@ -627,16 +632,6 @@
         font-size: 12px;
       }
 
-      /* 사진: 흑백으로 바꾼 뒤 한 가지 잉크로만 찍는다(검정 → 잉크, 흰색 → 종이) */
-      html.riso figure img,
-      html.riso figure video {
-        filter: grayscale(1) contrast(1.12) url(#ink-g);
-      }
-      html.riso section:nth-of-type(3n) figure img,
-      html.riso section:nth-of-type(3n) figure video {
-        filter: grayscale(1) contrast(1.12) url(#ink-p);
-      }
-
       /* 마지막 장: 책자 뒤표지처럼 보라 잉크를 통째로 깔고 글은 종이색으로 */
       html.riso main section:last-of-type {
         background: var(--ink);
@@ -711,27 +706,6 @@
     </style>
   </head>
   <body>
-    <!-- 리소 인쇄판(#1)의 한 가지 잉크 사진: 밝기만 남겨 검정은 잉크, 흰색은 그대로 흰색으로 -->
-    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
-      <filter id="ink-g" color-interpolation-filters="sRGB">
-        <feColorMatrix
-          type="matrix"
-          values="0.1859 0.6254 0.0631 0 0.1255
-                  0.1000 0.3366 0.0340 0 0.5294
-                  0.1484 0.4992 0.0504 0 0.3020
-                  0 0 0 1 0"
-        />
-      </filter>
-      <filter id="ink-p" color-interpolation-filters="sRGB">
-        <feColorMatrix
-          type="matrix"
-          values="0.1050 0.3534 0.0357 0 0.5059
-                  0.1592 0.5357 0.0541 0 0.2510
-                  0.0617 0.2075 0.0210 0 0.7098
-                  0 0 0 1 0"
-        />
-      </filter>
-    </svg>
     <a id="title" href="#"><img src="assets/logo.svg" alt="glimpse" /></a>
     <div id="lang">
       <button class="txt" data-l="ko">한</button>
