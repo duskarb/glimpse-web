@@ -673,105 +673,6 @@
         color: var(--paper);
       }
 
-
-      /* --- 화면 장치들도 책자처럼 ---
-         한/EN은 판 이름처럼 KO / EN, 고른 쪽 아래에 초록 형광 띠.
-         information·문장 보내기는 보라 판 뒤로 초록 판이 어긋나 찍힌 두 잉크 딱지.
-         오른쪽 목차는 차례처럼 초록 장 번호 + 영문 제목, 아래 가운데에는 쪽 번호 */
-      html.riso #lang {
-        gap: 6px;
-        align-items: baseline;
-      }
-      html.riso #lang .txt {
-        font-family: "BioRhyme", serif;
-        font-weight: 800;
-        font-size: 14px;
-        letter-spacing: -0.04em;
-        color: var(--ink);
-        opacity: 0.4;
-        padding: 0 2px;
-      }
-      html.riso #lang .txt.on {
-        opacity: 1;
-        background: linear-gradient(transparent 58%, rgba(32, 135, 77, 0.38) 58%);
-      }
-      html.riso #lang .sep {
-        font-family: "BioRhyme", serif;
-        font-size: 13px;
-        color: var(--ink-g);
-      }
-      html.riso #info-btn,
-      html.riso #ask-open {
-        isolation: isolate;
-        font-family: "Gothic A1", sans-serif;
-        font-weight: 700;
-        font-size: 13px;
-        letter-spacing: 0;
-        color: var(--paper);
-        background: var(--ink);
-        padding: 7px 12px 8px;
-      }
-      html.riso #info-btn::before,
-      html.riso #ask-open::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: -1;
-        background: var(--ink-g);
-        mix-blend-mode: multiply;
-        transform: translate(5px, 4px);
-        transition: transform 0.25s ease-in-out;
-      }
-      html.riso #ask-open {
-        top: calc(16px + env(safe-area-inset-top));
-      }
-      html.riso #info-btn:hover::before,
-      html.riso #ask-open:hover::before {
-        transform: translate(2px, 2px);
-      }
-      html.riso #index .txt {
-        font-family: "BioRhyme", serif;
-        font-weight: 800;
-        font-size: 14px;
-        letter-spacing: -0.05em;
-        color: var(--ink);
-      }
-      html.riso #index .n {
-        display: inline-block;
-        width: 0.95em;
-        margin-right: 0.35em;
-        font-family: "Alfa Slab One", serif;
-        font-weight: 400;
-        font-size: 22px;
-        line-height: 0.8;
-        letter-spacing: 0;
-        color: var(--ink-g);
-        opacity: 0.85;
-        vertical-align: -0.12em;
-        transform: scaleX(0.5);
-        transform-origin: 100% 50%;
-      }
-      #folio {
-        display: none;
-      }
-      html.riso #folio {
-        display: block;
-        position: fixed;
-        left: 50%;
-        bottom: calc(14px + env(safe-area-inset-bottom));
-        transform: translateX(-50%);
-        z-index: 5;
-        font-family: "Gothic A1", sans-serif;
-        font-size: 11px;
-        letter-spacing: 0.04em;
-        color: var(--ink-p);
-        opacity: 0;
-        transition: opacity 0.3s;
-        pointer-events: none;
-      }
-      html.riso body.scrolled #folio {
-        opacity: 1;
-      }
       @media (max-width: 800px) {
         html.riso #topfade {
           background-color: var(--paper);
@@ -786,14 +687,10 @@
           background: linear-gradient(rgba(255, 255, 255, 0), var(--paper));
         }
         html.riso #index .txt {
-          color: var(--ink);
-          opacity: 0.45 !important;
+          color: var(--ink-g);
         }
         html.riso #index .txt.on {
-          opacity: 1 !important;
-        }
-        html.riso #folio {
-          display: none;
+          color: var(--ink);
         }
         html.riso body.index-open #index {
           background: var(--paper);
@@ -819,7 +716,6 @@
     </div>
     <button id="info-btn" class="txt">information</button>
     <nav id="index"></nav>
-    <div id="folio" aria-hidden="true"></div>
 
     <div id="topfade"></div>
     <div id="paper"></div>
@@ -2122,14 +2018,6 @@
       document
         .querySelectorAll("#lang .txt")
         .forEach((b) => (b.onclick = () => setLang(b.dataset.l)));
-      // 리소판은 판 이름처럼 KO / EN
-      if (RISO) {
-        $("lang").querySelector('[data-l="ko"]').textContent = "KO";
-        const sep = document.createElement("span");
-        sep.className = "sep";
-        sep.textContent = "/";
-        $("lang").querySelector('[data-l="en"]').before(sep);
-      }
 
       // 섹션으로 부드럽게 이동. 가는 도중 이미지가 불러와져 길이가 바뀌면, 멈춘 뒤 한 번 더 맞춘다
       async function goTo(s) {
@@ -2171,18 +2059,7 @@
       function updateNow() {
         const ko = document.documentElement.lang === "ko";
         labels.forEach((b, i) => {
-          const name = sections[i].dataset[RISO || !ko ? "nameEn" : "nameKo"];
-          // 리소판은 책자 차례처럼: 영문 제목 앞에 초록 장 번호
-          const m = RISO && name.match(/^(\d{2})\s+(.*)$/);
-          if (m) {
-            if (b.dataset.name !== name) {
-              const n = document.createElement("span");
-              n.className = "n";
-              n.textContent = m[1];
-              b.replaceChildren(n, m[2]);
-            }
-          } else b.textContent = name;
-          b.dataset.name = name;
+          b.textContent = sections[i].dataset["name" + (ko ? "Ko" : "En")];
           b.classList.toggle("on", sections[i] === current);
         });
       }
@@ -2211,11 +2088,6 @@
           "scrolled",
           READ || SC.scrollTop > innerHeight * 0.5,
         );
-        // 리소판 쪽 번호: 화면 한 장 높이를 한 쪽으로 친다
-        if (RISO)
-          $("folio").textContent = String(
-            Math.floor((SC.scrollTop + innerHeight * 0.5) / innerHeight) + 1,
-          ).padStart(2, "0");
         current = sections[0];
         for (const s of sections)
           if (s.getBoundingClientRect().top < innerHeight * 0.5) current = s;
