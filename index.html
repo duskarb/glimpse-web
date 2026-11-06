@@ -15,7 +15,7 @@
         document.write(
           '<link rel="preconnect" href="https://fonts.googleapis.com" />' +
             '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />' +
-            '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=BioRhyme:wght@800&family=Gothic+A1:wght@400;700&display=swap" />',
+            '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=BioRhyme:wght@800&family=Gothic+A1:wght@400;700&family=Noto+Serif+KR:wght@400&display=swap" />',
         );
               }
     </script>
@@ -627,9 +627,12 @@
       html.riso h2.has-num {
         padding-left: 46px;
       }
+      /* 날짜와 출처는 책자 캡션처럼 세리프로 */
       html.riso .text p.src {
         color: var(--ink-g);
+        font-family: "Noto Serif KR", serif;
         font-size: 12px;
+        letter-spacing: 0;
       }
 
       /* 마지막 장: 책자 뒤표지처럼 보라 잉크를 통째로 깔고 글은 종이색으로 */
@@ -2265,14 +2268,14 @@
         document.head.appendChild(lib);
       }
 
-      // QR은 원근으로 일그러져도 읽힌다. 네 꼭짓점을 따로 스프링에 매달아
-      // 들쭉날쭉하게 끌려다니게 하고, 매 프레임 그 사각형 안에 코드를 다시 그린다
+      // QR은 원근으로 일그러져도 읽힌다. 네 꼭짓점이 따로 천천히 출발해 천천히 멈추며
+      // 크게 옮겨 다니고, 매 프레임 그 사각형 안에 코드를 다시 그린다
       function warpQR(model) {
         const n = model.getModuleCount();
         const QUIET = 4; // 인식에 필요한 흰 여백(모듈 단위)
         const N = n + QUIET * 2;
         const S = 240; // 일그러지기 전 한 변
-        const R = S * 0.17; // 꼭짓점이 움직이는 최대 거리
+        const R = S * 0.14; // 꼭짓점이 움직이는 최대 거리
         const W = S + R * 2 + 8;
         const dpr = window.devicePixelRatio || 1;
         const cv = document.createElement("canvas");
@@ -2300,13 +2303,8 @@
           [o, o + S],
         ];
         // 조금 덜 감쇠시킨 스프링이라 목표를 지나쳤다 돌아오며 쫀득하게 흔들린다
-        const corners = home.map(([x, y]) => ({
-          x, y, vx: 0, vy: 0, tx: x, ty: y, hx: x, hy: y,
-          next: Math.random() * 1.5,
-        }));
-        const K = 90;
-        const D = 7;
-        // 리소판(#1)은 튕기지 않는다. 천천히 출발해 천천히 멈추고(ease-in-out), 목표를 넘지 않는다
+        const corners = home.map(([x, y]) => ({ x, y, tx: x, ty: y, hx: x, hy: y }));
+        // 튕기지 않는다. 천천히 출발해 천천히 멈추고(ease-in-out), 목표를 넘지 않는다
         const ease = (p) => (p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2);
 
         // 단위 정사각형 → 네 꼭짓점 사각형으로 보내는 원근 변환
@@ -2335,46 +2333,30 @@
           if ($("qr").classList.contains("hidden")) return;
 
           for (const k of corners) {
-            if (RISO) {
-              // 한 번 움직이기 시작하면 도착할 때까지 목표를 바꾸지 않는다
-              if (k.t0 === undefined || t >= k.t0 + k.dur) {
-                if (k.t0 !== undefined) {
-                  k.x = k.tx;
-                  k.y = k.ty;
-                }
-                if (k.t0 === undefined || t >= k.t0 + k.dur + k.rest) {
-                  // 자잘하게 흔들리지 않게, 매번 지금 자리의 반대쪽 멀리로 크게 옮긴다.
-                  // 대신 움직이는 폭은 기본판보다 조금 작게
-                  const now = Math.atan2(k.y - k.hy, k.x - k.hx);
-                  const a = now + Math.PI + (Math.random() - 0.5) * (Math.PI / 1.5);
-                  const m = R * 0.8 * (0.8 + Math.random() * 0.2);
-                  k.fx = k.x;
-                  k.fy = k.y;
-                  k.tx = k.hx + Math.cos(a) * m;
-                  k.ty = k.hy + Math.sin(a) * m;
-                  k.t0 = t;
-                  k.dur = 1.1 + Math.random() * 1.2;
-                  k.rest = 0.2 + Math.random() * 0.8;
-                }
-                continue;
+            // 한 번 움직이기 시작하면 도착할 때까지 목표를 바꾸지 않는다
+            if (k.t0 === undefined || t >= k.t0 + k.dur) {
+              if (k.t0 !== undefined) {
+                k.x = k.tx;
+                k.y = k.ty;
               }
-              const p = ease((t - k.t0) / k.dur);
-              k.x = k.fx + (k.tx - k.fx) * p;
-              k.y = k.fy + (k.ty - k.fy) * p;
+              if (k.t0 === undefined || t >= k.t0 + k.dur + k.rest) {
+                // 자잘하게 흔들리지 않게, 매번 지금 자리의 반대쪽 멀리로 크게 옮긴다
+                const now = Math.atan2(k.y - k.hy, k.x - k.hx);
+                const a = now + Math.PI + (Math.random() - 0.5) * (Math.PI / 1.5);
+                const m = R * (0.8 + Math.random() * 0.2);
+                k.fx = k.x;
+                k.fy = k.y;
+                k.tx = k.hx + Math.cos(a) * m;
+                k.ty = k.hy + Math.sin(a) * m;
+                k.t0 = t;
+                k.dur = 1.1 + Math.random() * 1.2;
+                k.rest = 0.2 + Math.random() * 0.8;
+              }
               continue;
             }
-            if (t > k.next) {
-              // 새 자리로 홱 당긴다. 가끔은 제자리 근처로 돌아온다
-              const a = Math.random() * Math.PI * 2;
-              const m = Math.random() < 0.25 ? R * 0.2 : R * (0.4 + Math.random() * 0.6);
-              k.tx = k.hx + Math.cos(a) * m;
-              k.ty = k.hy + Math.sin(a) * m;
-              k.next = t + 0.5 + Math.random() * 1.8;
-            }
-            k.vx += (K * (k.tx - k.x) - D * k.vx) * dt;
-            k.vy += (K * (k.ty - k.y) - D * k.vy) * dt;
-            k.x += k.vx * dt;
-            k.y += k.vy * dt;
+            const p = ease((t - k.t0) / k.dur);
+            k.x = k.fx + (k.tx - k.fx) * p;
+            k.y = k.fy + (k.ty - k.fy) * p;
           }
 
           const map = homography(corners.map((k) => [k.x, k.y]));
