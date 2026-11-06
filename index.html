@@ -60,48 +60,6 @@
         display: none !important;
       }
 
-      /* --- 스크롤하면 문단과 그림이 하나씩 통통 튀며 들어온다.
-         내릴 땐 아래에서 올라오고, 올릴 땐 위에서 내려온다(--dir: -1) --- */
-      .rise {
-        opacity: 0;
-      }
-      .rise.in {
-        animation: boing 0.8s both;
-        animation-delay: var(--d, 0s);
-      }
-      @keyframes boing {
-        0% {
-          opacity: 0;
-          transform: translateY(calc(var(--dir, 1) * 26px));
-          animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
-        }
-        36% {
-          opacity: 1;
-          transform: translateY(calc(var(--dir, 1) * -5px));
-          animation-timing-function: ease-in-out;
-        }
-        58% {
-          transform: translateY(calc(var(--dir, 1) * 2px));
-          animation-timing-function: ease-in-out;
-        }
-        78% {
-          transform: translateY(calc(var(--dir, 1) * -0.7px));
-          animation-timing-function: ease-in-out;
-        }
-        100% {
-          opacity: 1;
-          transform: none;
-        }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .rise {
-          opacity: 1;
-        }
-        .rise.in {
-          animation: none;
-        }
-      }
-
       /* --- 고정 UI --- */
       #title {
         position: fixed;
@@ -2138,58 +2096,6 @@
         ),
       );
       document.querySelectorAll("video").forEach((v) => vio.observe(v));
-
-      // 제목·문단·그림을 하나씩 지켜본다. 한 번에 여럿이 들어오면 스크롤 방향 쪽부터
-      // 조금씩 늦춘다. 화면 밖으로 빠져나가면 다시 숨겨 두어, 위로든 아래로든 다시 들어온다
-      // 지금 스크롤이 내려가는 중(1)인지 올라가는 중(-1)인지
-      let scrollDir = 1;
-      let lastTop = SC.scrollTop;
-      SC.addEventListener(
-        "scroll",
-        () => {
-          if (SC.scrollTop !== lastTop) scrollDir = SC.scrollTop > lastTop ? 1 : -1;
-          lastTop = SC.scrollTop;
-        },
-        { passive: true },
-      );
-      const rio = new IntersectionObserver(
-        (es) => {
-          const enter = [];
-          for (const e of es) {
-            const el = e.target;
-            if (e.isIntersecting) {
-              if (!el.classList.contains("in")) enter.push(e);
-            } else {
-              el.classList.remove("in");
-            }
-          }
-          // 위치마다 순서를 매긴다 (나란히 놓인 그림은 top이 거의 같아 함께 들어온다)
-          const tops = [];
-          for (const e of enter) {
-            const y = e.boundingClientRect.top;
-            if (!tops.some((t) => Math.abs(t - y) < 6)) tops.push(y);
-          }
-          tops.sort((a, b) => (a - b) * scrollDir);
-          for (const e of enter) {
-            const y = e.boundingClientRect.top;
-            const order = tops.findIndex((t) => Math.abs(t - y) < 6);
-            e.target.style.setProperty("--d", Math.min(order, 8) * 0.07 + "s");
-            e.target.style.setProperty("--dir", scrollDir);
-            e.target.classList.add("in");
-          }
-        },
-        { rootMargin: "-50px 0px -40px 0px" },
-      );
-      // 리소판(#1)은 본문과 이미지가 처음부터 그대로 놓여 있다
-      if (!RISO)
-        document
-          .querySelectorAll(
-            "main h2, main .text > *, main figcaption, main figure img, main figure video",
-          )
-          .forEach((el) => {
-            el.classList.add("rise");
-            rio.observe(el);
-          });
 
       let saved = null;
       try {
